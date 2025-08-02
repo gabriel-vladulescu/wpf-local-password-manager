@@ -114,6 +114,8 @@ namespace AccountManager.ViewModels
         public ICommand AddAccountCommand { get; }
         public ICommand EditAccountCommand { get; }
         public ICommand DeleteAccountCommand { get; }
+        public ICommand CopyEmailCommand { get; }
+        public ICommand CopyUsernameCommand { get; }
         public ICommand CopyPasswordCommand { get; }
         public ICommand ClearSearchCommand { get; }
         public ICommand DismissErrorCommand { get; }
@@ -130,6 +132,8 @@ namespace AccountManager.ViewModels
             AddAccountCommand = new RelayCommand(AddAccount, _ => SelectedGroup != null);
             EditAccountCommand = new RelayCommand(EditAccount);
             DeleteAccountCommand = new RelayCommand(DeleteAccount);
+            CopyEmailCommand = new RelayCommand(CopyEmail);
+            CopyUsernameCommand = new RelayCommand(CopyUsername);
             CopyPasswordCommand = new RelayCommand(CopyPassword);
             ClearSearchCommand = new RelayCommand(_ => SearchText = "");
             DismissErrorCommand = new RelayCommand(DismissError);
@@ -393,6 +397,41 @@ namespace AccountManager.ViewModels
             }
         }
 
+        private void CopyEmail(object parameter)
+        {
+            if (parameter is Account account && !string.IsNullOrEmpty(account.Email))
+            {
+                try
+                {
+                    Clipboard.SetText(account.Email);
+                    Console.WriteLine($"Email copied for account: {account.Name}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error copying email: {ex.Message}");
+                    MessageBox.Show("Failed to copy email to clipboard.", "Copy Error", 
+                                MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+        }
+
+        private void CopyUsername(object parameter)
+        {
+            if (parameter is Account account && !string.IsNullOrEmpty(account.Username))
+            {
+                try
+                {
+                    Clipboard.SetText(account.Username);
+                    Console.WriteLine($"Username copied for account: {account.Name}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error copying username: {ex.Message}");
+                    MessageBox.Show("Failed to copy username to clipboard.", "Copy Error", 
+                                MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+        }
         private void CopyPassword(object parameter)
         {
             if (parameter is Account account && !string.IsNullOrEmpty(account.Password))

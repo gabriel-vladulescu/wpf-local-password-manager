@@ -336,14 +336,13 @@ namespace AccountManager.Views
         }
 
         /// <summary>
-        /// Show a dialog and return the result
+        /// Show a dialog and return the result using custom dialog service
         /// </summary>
         public static async System.Threading.Tasks.Task<bool?> ShowDialogAsync(UserControl dialog)
         {
             try
             {
-                var result = await MaterialDesignThemes.Wpf.DialogHost.Show(dialog);
-                return result?.ToString() == "True";
+                return await DialogService.ShowDialogAsync(dialog);
             }
             catch (Exception ex)
             {

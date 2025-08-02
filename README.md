@@ -39,7 +39,7 @@ A modern, secure, and elegant password manager built with WPF and Material Desig
 ## Installation
 
 ### Option 1: Download Release
-1. Go to [Releases](https://github.com/yourusername/wpf-local-password-manager/releases)
+1. Go to [Releases](https://github.com/username/wpf-local-password-manager/releases)
 2. Download `AccountManager.exe`
 3. Run the executable - no installation required!
 
@@ -52,7 +52,7 @@ A modern, secure, and elegant password manager built with WPF and Material Desig
 #### Build Steps
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/wpf-local-password-manager.git
+git clone https://github.com/username/wpf-local-password-manager.git
 cd wpf-local-password-manager
 
 # Build and run
@@ -97,8 +97,7 @@ AccountManager/
 ├── ViewModels/       # MVVM view models with commands
 ├── Views/            # XAML dialogs and user controls
 ├── Services/         # JSON storage service
-├── Converters/       # WPF value converters
-└── Themes/           # Dark/Light theme resources
+└── Converters/       # WPF value converters
 ```
 
 ### Key Technologies

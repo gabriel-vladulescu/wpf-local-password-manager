@@ -131,11 +131,15 @@ namespace AccountManager.Services
             {
                 // Dark theme resources
                 app.Resources["SidebarColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(30, 41, 59)); // #1E293B
+                    System.Windows.Media.Color.FromRgb(30, 41, 59)); // #1E293B - Dark sidebar
                 app.Resources["MainBackgroundColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(15, 23, 42)); // #0F172A
+                    System.Windows.Media.Color.FromRgb(15, 23, 42)); // #0F172A - Dark background
                 app.Resources["CardBackgroundColor"] = new System.Windows.Media.SolidColorBrush(
                     System.Windows.Media.Color.FromRgb(30, 41, 59)); // #1E293B
+                app.Resources["CardBorderColor"] = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(51, 65, 85)); // #334155
+                app.Resources["CardBorderHoverColor"] = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(99, 102, 241)); // #6366F1
                 app.Resources["TextPrimaryColor"] = new System.Windows.Media.SolidColorBrush(
                     System.Windows.Media.Color.FromRgb(241, 245, 249)); // #F1F5F9
                 app.Resources["TextSecondaryColor"] = new System.Windows.Media.SolidColorBrush(
@@ -148,16 +152,26 @@ namespace AccountManager.Services
                     System.Windows.Media.Color.FromRgb(51, 65, 85)); // #334155
                 app.Resources["EmptyStateBackgroundColor"] = new System.Windows.Media.SolidColorBrush(
                     System.Windows.Media.Color.FromRgb(51, 65, 85)); // #334155
+                
+                // Sidebar text colors for dark theme (WHITE TEXT)
+                app.Resources["SidebarTextPrimaryColor"] = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(255, 255, 255)); // White
+                app.Resources["SidebarTextSecondaryColor"] = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(148, 163, 184)); // #94A3B8
             }
             else
             {
                 // Light theme resources
                 app.Resources["SidebarColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(30, 41, 59)); // Keep sidebar dark in light mode
+                    System.Windows.Media.Color.FromRgb(255, 255, 255)); // #FFFFFF - White sidebar
                 app.Resources["MainBackgroundColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(248, 250, 252)); // #F8FAFC
+                    System.Windows.Media.Color.FromRgb(241, 245, 249)); // #F1F5F9 - Light gray background
                 app.Resources["CardBackgroundColor"] = new System.Windows.Media.SolidColorBrush(
                     System.Windows.Media.Color.FromRgb(255, 255, 255)); // #FFFFFF
+                app.Resources["CardBorderColor"] = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(226, 232, 240)); // #E2E8F0
+                app.Resources["CardBorderHoverColor"] = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(99, 102, 241)); // #6366F1
                 app.Resources["TextPrimaryColor"] = new System.Windows.Media.SolidColorBrush(
                     System.Windows.Media.Color.FromRgb(30, 41, 59)); // #1E293B
                 app.Resources["TextSecondaryColor"] = new System.Windows.Media.SolidColorBrush(
@@ -170,8 +184,18 @@ namespace AccountManager.Services
                     System.Windows.Media.Color.FromRgb(248, 250, 252)); // #F8FAFC
                 app.Resources["EmptyStateBackgroundColor"] = new System.Windows.Media.SolidColorBrush(
                     System.Windows.Media.Color.FromRgb(248, 250, 252)); // #F8FAFC
+                
+                // Sidebar text colors for light theme (DARK TEXT)
+                app.Resources["SidebarTextPrimaryColor"] = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(30, 41, 59)); // #1E293B - Dark text
+                app.Resources["SidebarTextSecondaryColor"] = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(100, 116, 139)); // #64748B - Gray text
             }
 
+            // Force UI refresh
+            Console.WriteLine($"Theme switched to: {CurrentTheme}");
+            Console.WriteLine($"Sidebar color set to: {(CurrentTheme == AppTheme.Dark ? "#1E293B (dark)" : "#FFFFFF (white)")}");
+            
             // Common colors that don't change
             app.Resources["PrimaryColor"] = new System.Windows.Media.SolidColorBrush(
                 System.Windows.Media.Color.FromRgb(99, 102, 241)); // #6366F1
