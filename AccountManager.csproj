@@ -16,4 +16,8 @@
     <PackageReference Include="MaterialDesignColors" Version="2.1.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Resource Include="Assets\logo-light.png" />
+    <Resource Include="Assets\logo-dark.png" />
+  </ItemGroup>
 </Project>

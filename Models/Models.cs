@@ -12,6 +12,7 @@ namespace AccountManager.Models
         private string _username = "";
         private string _email = "";
         private string _password = "";
+        private string _website = "";
         private string _notes = "";
 
         public string Name
@@ -36,6 +37,12 @@ namespace AccountManager.Models
         {
             get => _password;
             set { _password = value; OnPropertyChanged(); }
+        }
+
+        public string Website
+        {
+            get => _website;
+            set { _website = value; OnPropertyChanged(); }
         }
 
         public string Notes

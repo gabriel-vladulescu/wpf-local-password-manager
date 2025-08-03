@@ -31,6 +31,9 @@ namespace AccountManager
 
             // Initialize dialog service
             DialogService.Initialize(this);
+            
+            // Update maximize/restore button icon based on window state
+            UpdateMaximizeRestoreButton();
         }
 
         protected override void OnSourceInitialized(EventArgs e)
@@ -59,11 +62,13 @@ namespace AccountManager
             switch (msg)
             {
                 case WM_SIZING:
+                    // Prevent manual resizing
                     handled = true;
                     return IntPtr.Zero;
                     
                 case WM_NCHITTEST:
                     var result = DefWindowProc(hwnd, msg, wParam, lParam).ToInt32();
+                    // Disable resize handles by converting them to caption
                     if (result >= HTLEFT && result <= HTBOTTOMLEFT && result != HTCAPTION)
                     {
                         handled = true;
@@ -77,29 +82,77 @@ namespace AccountManager
         [System.Runtime.InteropServices.DllImport("user32.dll")]
         private static extern IntPtr DefWindowProc(IntPtr hWnd, int uMsg, IntPtr wParam, IntPtr lParam);
 
+        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ClickCount == 2)
+            {
+                // Double-click to maximize/restore
+                MaximizeButton_Click(sender, e);
+            }
+            else if (e.ChangedButton == MouseButton.Left)
+            {
+                // Single click to drag
+                try
+                {
+                    DragMove();
+                }
+                catch
+                {
+                    // Ignore any exceptions from DragMove
+                }
+            }
+        }
+
         private void MinimizeButton_Click(object sender, RoutedEventArgs e)
         {
-            WindowState = WindowState.Minimized;
+            try
+            {
+                WindowState = WindowState.Minimized;
+                System.Diagnostics.Debug.WriteLine("Window minimized");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error minimizing: {ex.Message}");
+            }
         }
 
         private void MaximizeButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_isFullscreen)
-                return;
-            
-            if (WindowState == WindowState.Maximized)
+            try
             {
-                WindowState = WindowState.Normal;
+                if (_isFullscreen)
+                    return;
+                
+                if (WindowState == WindowState.Maximized)
+                {
+                    WindowState = WindowState.Normal;
+                    System.Diagnostics.Debug.WriteLine("Window restored");
+                }
+                else
+                {
+                    WindowState = WindowState.Maximized;
+                    System.Diagnostics.Debug.WriteLine("Window maximized");
+                }
+                
+                UpdateMaximizeRestoreButton();
             }
-            else
+            catch (Exception ex)
             {
-                WindowState = WindowState.Maximized;
+                System.Diagnostics.Debug.WriteLine($"Error maximizing/restoring: {ex.Message}");
             }
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
-            Close();
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("Closing window");
+                Close();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error closing: {ex.Message}");
+            }
         }
 
         private void ToggleFullscreen_Click(object sender, RoutedEventArgs e)
@@ -109,7 +162,7 @@ namespace AccountManager
             if (_isFullscreen)
             {
                 _isFullscreen = false;
-                WindowStyle = WindowStyle.SingleBorderWindow;
+                WindowStyle = WindowStyle.None; // Keep custom style
                 WindowState = _previousWindowState;
                 
                 if (_previousWindowState == WindowState.Normal)
@@ -136,11 +189,48 @@ namespace AccountManager
                     _previousTop = Top;
                 }
                 
-                WindowStyle = WindowStyle.None;
                 WindowState = WindowState.Maximized;
                 
                 if (fullscreenIcon != null)
                     fullscreenIcon.Kind = PackIconKind.FullscreenExit;
+            }
+            
+            UpdateMaximizeRestoreButton();
+        }
+
+        private void UpdateMaximizeRestoreButton()
+        {
+            var maximizeRestoreIcon = FindName("MaximizeRestoreIcon") as PackIcon;
+            var maximizeRestoreButton = FindName("MaximizeRestoreButton") as Button;
+            
+            if (maximizeRestoreIcon != null && maximizeRestoreButton != null)
+            {
+                if (WindowState == WindowState.Maximized)
+                {
+                    maximizeRestoreIcon.Kind = PackIconKind.WindowRestore;
+                    maximizeRestoreButton.ToolTip = "Restore";
+                }
+                else
+                {
+                    maximizeRestoreIcon.Kind = PackIconKind.WindowMaximize;
+                    maximizeRestoreButton.ToolTip = "Maximize";
+                }
+            }
+        }
+
+        private async void SettingsButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var dialog = new SettingsDialog();
+                dialog.SetupDialog();
+                
+                // Just show dialog, settings are saved immediately on toggle
+                await DialogService.ShowDialogAsync(dialog);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error showing settings: {ex.Message}");
             }
         }
 
@@ -157,6 +247,7 @@ namespace AccountManager
         protected override void OnStateChanged(EventArgs e)
         {
             base.OnStateChanged(e);
+            UpdateMaximizeRestoreButton();
             
             if (!_isFullscreen && (WindowState == WindowState.Normal || WindowState == WindowState.Maximized))
             {

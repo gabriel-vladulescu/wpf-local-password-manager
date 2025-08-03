@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:converters="clr-namespace:AccountManager.Converters"
+             xmlns:services="clr-namespace:AccountManager.Services"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
@@ -11,9 +12,14 @@
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <!-- Converters with error handling -->
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
             <converters:BoolToStringConverter x:Key="BoolToStringConverter"/>
             <converters:BoolToIconConverter x:Key="BoolToIconConverter"/>
             <converters:FirstLetterConverter x:Key="FirstLetterConverter"/>
+            <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+            <converters:CensoredTextConverter x:Key="CensoredTextConverter"/>
+            <converters:ConditionalTextConverter x:Key="ConditionalTextConverter"/>
+            <converters:PasswordDisplayConverter x:Key="PasswordDisplayConverter"/>
 
             <!-- Core Brand Colors (Static) -->
             <SolidColorBrush x:Key="PrimaryColor" Color="#6366F1"/>
@@ -326,7 +332,7 @@
 
                                 <!-- Account Details -->
                                 <StackPanel Grid.Row="1">
-                                    <!-- Email -->
+                                    <!-- Website -->
                                     <Grid Margin="0,0,0,6">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="80"/>
@@ -335,21 +341,59 @@
                                         </Grid.ColumnDefinitions>
                                         
                                         <TextBlock Grid.Column="0"
-                                                Text="Email" 
+                                                Text="Website" 
                                                 Foreground="{DynamicResource TextSecondaryColor}"
-                                                FontSize="14"
-                                                UseLayoutRounding="True"
-                                                TextOptions.TextFormattingMode="Display"
-                                                TextOptions.TextRenderingMode="ClearType"/>
+                                                FontSize="14"/>
                                         
                                         <TextBlock Grid.Column="1"
-                                                Text="{Binding Email}" 
                                                 Foreground="{DynamicResource TextPrimaryColor}"
                                                 FontSize="14"
-                                                FontWeight="Medium"
-                                                UseLayoutRounding="True"
-                                                TextOptions.TextFormattingMode="Display"
-                                                TextOptions.TextRenderingMode="ClearType"/>
+                                                FontWeight="Medium">
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{StaticResource ConditionalTextConverter}">
+                                                    <Binding Path="Website"/>
+                                                    <Binding Source="{x:Static services:SettingsService.Instance}" Path="CensorAccountData"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                        
+                                        <Button Grid.Column="2"
+                                            Style="{StaticResource MaterialDesignIconButton}"
+                                            Command="{Binding DataContext.CopyWebsiteCommand,
+                                                    RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip="Copy Website"
+                                            Width="24" Height="24">
+                                            <materialDesign:PackIcon Kind="ContentCopy" 
+                                                                Foreground="#94A3B8" 
+                                                                Width="12" Height="12"/>
+                                        </Button>
+                                    </Grid>
+
+                                    <!-- Email -->
+                                    <Grid Margin="0,0,0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                            <TextBlock Grid.Column="0"
+                                                    Text="Email" 
+                                                    Foreground="{DynamicResource TextSecondaryColor}"
+                                                    FontSize="14"/>
+                                            
+                                            <TextBlock Grid.Column="1"
+                                                    Foreground="{DynamicResource TextPrimaryColor}"
+                                                    FontSize="14"
+                                                    FontWeight="Medium">
+                                                <TextBlock.Text>
+                                                    <MultiBinding Converter="{StaticResource ConditionalTextConverter}">
+                                                        <Binding Path="Email"/>
+                                                        <Binding Source="{x:Static services:SettingsService.Instance}" Path="CensorAccountData"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
                                         
                                         <Button Grid.Column="2"
                                             Style="{StaticResource MaterialDesignIconButton}"
@@ -375,19 +419,19 @@
                                         <TextBlock Grid.Column="0"
                                                 Text="Username" 
                                                 Foreground="{DynamicResource TextSecondaryColor}"
-                                                FontSize="14"
-                                                UseLayoutRounding="True"
-                                                TextOptions.TextFormattingMode="Display"
-                                                TextOptions.TextRenderingMode="ClearType"/>
+                                                FontSize="14"/>
                                         
                                         <TextBlock Grid.Column="1"
-                                                Text="{Binding Username}" 
                                                 Foreground="{DynamicResource TextPrimaryColor}"
                                                 FontSize="14"
-                                                FontWeight="Medium"
-                                                UseLayoutRounding="True"
-                                                TextOptions.TextFormattingMode="Display"
-                                                TextOptions.TextRenderingMode="ClearType"/>
+                                                FontWeight="Medium">
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{StaticResource ConditionalTextConverter}">
+                                                    <Binding Path="Username"/>
+                                                    <Binding Source="{x:Static services:SettingsService.Instance}" Path="CensorAccountData"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
                                         
                                         <Button Grid.Column="2"
                                             Style="{StaticResource MaterialDesignIconButton}"
@@ -413,20 +457,23 @@
                                         <TextBlock Grid.Column="0"
                                                 Text="Password" 
                                                 Foreground="{DynamicResource TextSecondaryColor}"
-                                                FontSize="14"
-                                                UseLayoutRounding="True"
-                                                TextOptions.TextFormattingMode="Display"
-                                                TextOptions.TextRenderingMode="ClearType"/>
+                                                FontSize="14"/>
                                         
                                         <TextBlock Grid.Column="1"
-                                                Text="••••••••••••" 
                                                 Foreground="{DynamicResource TextPrimaryColor}"
                                                 FontSize="14"
                                                 FontWeight="Medium"
                                                 UseLayoutRounding="True"
                                                 TextOptions.TextFormattingMode="Display"
-                                                TextOptions.TextRenderingMode="ClearType"/>
-                                        
+                                                TextOptions.TextRenderingMode="ClearType">
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{StaticResource PasswordDisplayConverter}">
+                                                    <Binding Path="Password"/>
+                                                    <Binding Source="{x:Static services:SettingsService.Instance}" Path="CensorPassword"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+
                                         <Button Grid.Column="2"
                                             Style="{StaticResource MaterialDesignIconButton}"
                                             ToolTip="Copy Password"
@@ -517,11 +564,57 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background">
-                                        <Setter.Value>
-                                            <SolidColorBrush Color="White" Opacity="0.1"/>
-                                        </Setter.Value>
-                                    </Setter>
+                                    <Setter Property="Background" Value="{DynamicResource InputBackgroundColor}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Window Control Button Style -->
+            <Style x:Key="WindowControlButton" TargetType="Button">
+                <Setter Property="Width" Value="32"/>
+                <Setter Property="Height" Value="32"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                                    CornerRadius="6">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource InputBackgroundColor}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Window Control Close Button Style (Red hover) -->
+            <Style x:Key="WindowControlCloseButton" TargetType="Button">
+                <Setter Property="Width" Value="32"/>
+                <Setter Property="Height" Value="32"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                                    CornerRadius="6">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="{StaticResource DangerColor}"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>

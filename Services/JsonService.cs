@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using AccountManager.Models;
@@ -8,63 +7,71 @@ namespace AccountManager.Services
 {
     public class JsonService
     {
-        private const string FileName = "accounts.json";
-        private readonly JsonSerializerOptions _options;
+        private const string DataFileName = "accounts.json";
 
-        public JsonService()
+        public void SaveData(AccountData data)
         {
-            _options = new JsonSerializerOptions
+            try
             {
-                WriteIndented = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            };
+                var options = new JsonSerializerOptions 
+                { 
+                    WriteIndented = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+                
+                var json = JsonSerializer.Serialize(data, options);
+                File.WriteAllText(DataFileName, json);
+                
+                System.Diagnostics.Debug.WriteLine($"Data saved successfully to {DataFileName}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error saving data: {ex.Message}");
+                throw;
+            }
         }
 
         public AccountData LoadData()
         {
             try
             {
-                if (!File.Exists(FileName))
+                if (!File.Exists(DataFileName))
                 {
-                    var defaultData = CreateDefaultData();
-                    SaveData(defaultData);
-                    return defaultData;
+                    System.Diagnostics.Debug.WriteLine($"Data file {DataFileName} not found, creating new data structure");
+                    return new AccountData();
                 }
 
-                var json = File.ReadAllText(FileName);
-                var data = JsonSerializer.Deserialize<AccountData>(json, _options);
-                return data ?? CreateDefaultData();
+                var json = File.ReadAllText(DataFileName);
+                
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    System.Diagnostics.Debug.WriteLine("Data file is empty, creating new data structure");
+                    return new AccountData();
+                }
+
+                var options = new JsonSerializerOptions 
+                { 
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    PropertyNameCaseInsensitive = true
+                };
+                
+                var data = JsonSerializer.Deserialize<AccountData>(json, options);
+                
+                System.Diagnostics.Debug.WriteLine($"Data loaded successfully from {DataFileName}");
+                System.Diagnostics.Debug.WriteLine($"Loaded {data?.Groups?.Count ?? 0} groups");
+                
+                return data ?? new AccountData();
+            }
+            catch (JsonException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"JSON parsing error: {ex.Message}");
+                throw new InvalidDataException($"Invalid JSON data in {DataFileName}: {ex.Message}", ex);
             }
             catch (Exception ex)
             {
-                // Log error or show message to user
                 System.Diagnostics.Debug.WriteLine($"Error loading data: {ex.Message}");
-                return CreateDefaultData();
+                throw;
             }
-        }
-
-        public void SaveData(AccountData data)
-        {
-            try
-            {
-                var json = JsonSerializer.Serialize(data, _options);
-                File.WriteAllText(FileName, json);
-                System.Diagnostics.Debug.WriteLine($"Successfully saved data to {FileName}");
-                System.Diagnostics.Debug.WriteLine($"Data: {json}");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error saving data: {ex.Message}");
-                throw new Exception($"Failed to save accounts: {ex.Message}", ex);
-            }
-        }
-
-        private AccountData CreateDefaultData()
-        {
-            return new AccountData
-            {
-                Groups = new List<AccountGroup>() // Start with empty list - no default groups
-            };
         }
     }
 }

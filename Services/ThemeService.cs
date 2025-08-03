@@ -216,10 +216,10 @@ namespace AccountManager.Services
                 if (File.Exists(SettingsFileName))
                 {
                     var json = File.ReadAllText(SettingsFileName);
-                    var settings = JsonSerializer.Deserialize<AppSettings>(json);
-                    if (settings != null && Enum.IsDefined(typeof(AppTheme), settings.Theme))
+                    var settings = JsonSerializer.Deserialize<ThemeSettings>(json);
+                    if (settings != null && Enum.TryParse<AppTheme>(settings.Theme, out var theme))
                     {
-                        CurrentTheme = settings.Theme;
+                        CurrentTheme = theme;
                     }
                 }
             }
@@ -238,7 +238,7 @@ namespace AccountManager.Services
         {
             try
             {
-                var settings = new AppSettings { Theme = CurrentTheme };
+                var settings = new ThemeSettings { Theme = CurrentTheme.ToString() };
                 var options = new JsonSerializerOptions { WriteIndented = true };
                 var json = JsonSerializer.Serialize(settings, options);
                 File.WriteAllText(SettingsFileName, json);
@@ -257,8 +257,9 @@ namespace AccountManager.Services
         }
     }
 
-    internal class AppSettings
+    // Separate settings class for theme-specific settings
+    internal class ThemeSettings
     {
-        public AppTheme Theme { get; set; } = AppTheme.Light;
+        public string Theme { get; set; } = "Light";
     }
 }

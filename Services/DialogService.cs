@@ -39,6 +39,10 @@ namespace AccountManager
             {
                 SetupAccountDialogHandlers(accountDialog, tcs);
             }
+            else if (dialog is SettingsDialog settingsDialog)
+            {
+                SetupSettingsDialogHandlers(settingsDialog, tcs);
+            }
 
             // Handle overlay click to close
             var overlayHandler = new MouseButtonEventHandler((s, e) => {
@@ -106,6 +110,20 @@ namespace AccountManager
                             tcs.TrySetResult(true);
                         }
                     };
+                }
+            }), System.Windows.Threading.DispatcherPriority.Loaded);
+        }
+
+        private static void SetupSettingsDialogHandlers(SettingsDialog dialog, System.Threading.Tasks.TaskCompletionSource<bool?> tcs)
+        {
+            System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
+            {
+                var cancelButton = FindButtonByContent(dialog, "Cancel");
+
+                if (cancelButton != null)
+                {
+                    cancelButton.Click += (s, e) => tcs.TrySetResult(false);
+                    System.Diagnostics.Debug.WriteLine("Settings Cancel button handler attached");
                 }
             }), System.Windows.Threading.DispatcherPriority.Loaded);
         }

@@ -1,0 +1,170 @@
+<UserControl x:Class="AccountManager.Views.Dialogs.SettingsDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             Background="Transparent">
+
+    <Border Style="{StaticResource GlassPanel}" 
+            MinWidth="450" MaxWidth="450" MaxHeight="500"
+            Background="{DynamicResource CardBackgroundColor}">
+        <Grid Margin="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Border Background="#6366F1" 
+                        Width="48" Height="48" 
+                        CornerRadius="24">
+                        <materialDesign:PackIcon Kind="Cog" 
+                                            Foreground="White"
+                                            Width="24" Height="24"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"/>
+                    </Border>
+                </StackPanel>
+                
+                <TextBlock Text="Settings" 
+                        FontSize="20" 
+                        FontWeight="Bold"
+                        Foreground="{DynamicResource TextPrimaryColor}"
+                        HorizontalAlignment="Center"
+                        Margin="0,12,0,0"/>
+                
+                <TextBlock Text="Configure your application preferences" 
+                        FontSize="14"
+                        Foreground="{DynamicResource TextSecondaryColor}"
+                        HorizontalAlignment="Center"
+                        Margin="0,6,0,0"/>
+            </StackPanel>
+
+            <!-- Settings Form -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,20,0,0"
+                Style="{StaticResource ModernScrollViewer}">
+                <StackPanel>
+                    
+                    <!-- Privacy Section -->
+                    <TextBlock Text="Privacy &amp; Security" 
+                             FontSize="16" 
+                             FontWeight="Bold"
+                             Foreground="{DynamicResource TextPrimaryColor}"
+                             Margin="0,0,0,12"/>
+                    
+                    <!-- Censor Account Data Toggle -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Hide Account Data" 
+                                     FontWeight="SemiBold"
+                                     Foreground="{DynamicResource TextPrimaryColor}"
+                                     FontSize="14"/>
+                            <TextBlock Text="Show username/email as ****** on cards" 
+                                     Foreground="{DynamicResource TextSecondaryColor}"
+                                     FontSize="12"
+                                     Margin="0,2,0,0"/>
+                        </StackPanel>
+                        
+                        <ToggleButton Grid.Column="1" 
+                                    Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                                    IsChecked="{Binding CensorAccountData}"/>
+                    </Grid>
+                    
+                    <!-- Censor Password Toggle -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Hide Passwords" 
+                                     FontWeight="SemiBold"
+                                     Foreground="{DynamicResource TextPrimaryColor}"
+                                     FontSize="14"/>
+                            <TextBlock Text="Show passwords as ****** on cards" 
+                                     Foreground="{DynamicResource TextSecondaryColor}"
+                                     FontSize="12"
+                                     Margin="0,2,0,0"/>
+                        </StackPanel>
+                        
+                        <ToggleButton Grid.Column="1" 
+                                    Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                                    IsChecked="{Binding CensorPassword}"/>
+                    </Grid>
+                    
+                    <!-- Enable Encryption Toggle -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Enable Encryption" 
+                                     FontWeight="SemiBold"
+                                     Foreground="{DynamicResource TextPrimaryColor}"
+                                     FontSize="14"/>
+                            <TextBlock Text="Encrypt accounts.json file with AES-256" 
+                                     Foreground="{DynamicResource TextSecondaryColor}"
+                                     FontSize="12"
+                                     Margin="0,2,0,0"/>
+                        </StackPanel>
+                        
+                        <ToggleButton Grid.Column="1" 
+                                    Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                                    IsChecked="{Binding EnableEncryption}"/>
+                    </Grid>
+
+                    <!-- UI Section -->
+                    <TextBlock Text="User Interface" 
+                             FontSize="16" 
+                             FontWeight="Bold"
+                             Foreground="{DynamicResource TextPrimaryColor}"
+                             Margin="0,20,0,12"/>
+                    
+                    <!-- Enable Local Search Toggle -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Enable Group Search" 
+                                     FontWeight="SemiBold"
+                                     Foreground="{DynamicResource TextPrimaryColor}"
+                                     FontSize="14"/>
+                            <TextBlock Text="Show search bar when viewing groups" 
+                                     Foreground="{DynamicResource TextSecondaryColor}"
+                                     FontSize="12"
+                                     Margin="0,2,0,0"/>
+                        </StackPanel>
+                        
+                        <ToggleButton Grid.Column="1" 
+                                    Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                                    IsChecked="{Binding EnableLocalSearch}"/>
+                    </Grid>
+                    
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Actions -->
+            <StackPanel Grid.Row="2" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Center"
+                    Margin="0,20,0,0">
+                <Button Content="Cancel" 
+                      Style="{StaticResource SecondaryButton}"
+                      Margin="0,0,16,0"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

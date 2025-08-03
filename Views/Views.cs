@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Linq;
 using AccountManager.Models;
+using AccountManager.Services;
 
 namespace AccountManager.Views
 {
@@ -15,7 +16,8 @@ namespace AccountManager.Views
     public enum DialogMode
     {
         Create,
-        Edit
+        Edit,
+        View
     }
 
     /// <summary>
@@ -34,12 +36,14 @@ namespace AccountManager.Views
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsEditMode));
                 OnPropertyChanged(nameof(IsCreateMode));
+                OnPropertyChanged(nameof(IsViewMode)); 
                 OnModeChanged();
             }
         }
 
         public bool IsEditMode => Mode == DialogMode.Edit;
         public bool IsCreateMode => Mode == DialogMode.Create;
+        public bool IsViewMode => Mode == DialogMode.View;
 
         /// <summary>
         /// Called when the dialog mode changes
@@ -217,6 +221,7 @@ namespace AccountManager.Views
                 Username = account.Username,
                 Email = account.Email,
                 Password = account.Password,
+                Website = account.Website,
                 Notes = account.Notes
             };
         }
@@ -232,6 +237,7 @@ namespace AccountManager.Views
                 _originalAccount.Username = Account.Username;
                 _originalAccount.Email = Account.Email;
                 _originalAccount.Password = Account.Password;
+                _originalAccount.Website = Account.Website;
                 _originalAccount.Notes = Account.Notes;
             }
         }
@@ -249,6 +255,7 @@ namespace AccountManager.Views
                     Username = Account.Username,
                     Email = Account.Email,
                     Password = Account.Password,
+                    Website = Account.Website,
                     Notes = Account.Notes
                 };
             }
@@ -280,6 +287,50 @@ namespace AccountManager.Views
             OnPropertyChanged(nameof(Subtitle));
             OnPropertyChanged(nameof(ActionButtonText));
             OnPropertyChanged(nameof(IconKind));
+        }
+    }
+
+    public class SettingsDialogViewModel : BaseDialogViewModel
+    {
+        private readonly SettingsService _settingsService;
+
+        public SettingsDialogViewModel()
+        {
+            _settingsService = SettingsService.Instance;
+        }
+
+        public bool CensorAccountData
+        {
+            get => _settingsService.CensorAccountData;
+            set => _settingsService.CensorAccountData = value;
+        }
+
+        public bool CensorPassword
+        {
+            get => _settingsService.CensorPassword;
+            set => _settingsService.CensorPassword = value;
+        }
+
+        public bool EnableEncryption
+        {
+            get => _settingsService.EnableEncryption;
+            set => _settingsService.EnableEncryption = value;
+        }
+
+        public bool EnableLocalSearch
+        {
+            get => _settingsService.EnableLocalSearch;
+            set => _settingsService.EnableLocalSearch = value;
+        }
+
+        public void InitializeForView()
+        {
+            Mode = DialogMode.View;
+            // Settings are automatically loaded from service
+            OnPropertyChanged(nameof(CensorAccountData));
+            OnPropertyChanged(nameof(CensorPassword));
+            OnPropertyChanged(nameof(EnableEncryption));
+            OnPropertyChanged(nameof(EnableLocalSearch));
         }
     }
 
