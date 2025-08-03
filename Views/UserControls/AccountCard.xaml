@@ -1,0 +1,122 @@
+<UserControl x:Class="AccountManager.Views.UserControls.AccountCard"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:converters="clr-namespace:AccountManager.Views.Converters"
+             x:Name="Root">
+    
+    <UserControl.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+        <converters:StringToVisibilityConverter x:Key="StringToVisConverter"/>
+        <converters:FirstLetterConverter x:Key="FirstLetterConverter"/>
+        <converters:ConditionalTextConverter x:Key="ConditionalTextConverter"/>
+    </UserControl.Resources>
+
+    <materialDesign:Card Margin="8" 
+                        Padding="16" 
+                        materialDesign:ShadowAssist.ShadowDepth="Depth1"
+                        MouseDoubleClick="OnCardDoubleClick"
+                        Cursor="Hand">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- Account Icon -->
+            <Border Grid.Column="0" 
+                    Background="{StaticResource PrimaryColor}" 
+                    CornerRadius="20" 
+                    Width="40" 
+                    Height="40" 
+                    Margin="0,0,16,0">
+                <TextBlock Text="{Binding Account.Name, ElementName=Root, Converter={StaticResource FirstLetterConverter}}" 
+                          Foreground="White" 
+                          FontSize="16" 
+                          FontWeight="Bold" 
+                          HorizontalAlignment="Center" 
+                          VerticalAlignment="Center"/>
+            </Border>
+            
+            <!-- Account Details -->
+            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <TextBlock Text="{Binding Account.Name, ElementName=Root}" 
+                          FontSize="16" 
+                          FontWeight="Medium" 
+                          Foreground="{StaticResource TextPrimaryColor}"/>
+                
+                <TextBlock Text="{Binding Account.Username, ElementName=Root}" 
+                          FontSize="14" 
+                          Foreground="{StaticResource TextSecondaryColor}"
+                          Visibility="{Binding Account.Username, ElementName=Root, Converter={StaticResource StringToVisConverter}}"
+                          Margin="0,2,0,0"/>
+                
+                <TextBlock Text="{Binding Account.Email, ElementName=Root}" 
+                          FontSize="12" 
+                          Foreground="{StaticResource TextSecondaryColor}"
+                          Visibility="{Binding Account.Email, ElementName=Root, Converter={StaticResource StringToVisConverter}}"
+                          Margin="0,2,0,0"/>
+            </StackPanel>
+            
+            <!-- Action Buttons -->
+            <StackPanel Grid.Column="2" 
+                       Orientation="Horizontal" 
+                       VerticalAlignment="Center">
+                
+                <!-- Copy Email -->
+                <Button Style="{StaticResource MaterialDesignIconButton}" 
+                       Command="{Binding CopyEmailCommand, ElementName=Root}" 
+                       CommandParameter="{Binding Account, ElementName=Root}"
+                       ToolTip="Copy Email"
+                       Visibility="{Binding Account.Email, ElementName=Root, Converter={StaticResource StringToVisConverter}}">
+                    <materialDesign:PackIcon Kind="Email" />
+                </Button>
+                
+                <!-- Copy Username -->
+                <Button Style="{StaticResource MaterialDesignIconButton}" 
+                       Command="{Binding CopyUsernameCommand, ElementName=Root}" 
+                       CommandParameter="{Binding Account, ElementName=Root}"
+                       ToolTip="Copy Username"
+                       Visibility="{Binding Account.Username, ElementName=Root, Converter={StaticResource StringToVisConverter}}">
+                    <materialDesign:PackIcon Kind="Account" />
+                </Button>
+                
+                <!-- Copy Password -->
+                <Button Style="{StaticResource MaterialDesignIconButton}" 
+                       Command="{Binding CopyPasswordCommand, ElementName=Root}" 
+                       CommandParameter="{Binding Account, ElementName=Root}"
+                       ToolTip="Copy Password"
+                       Visibility="{Binding Account.Password, ElementName=Root, Converter={StaticResource StringToVisConverter}}">
+                    <materialDesign:PackIcon Kind="Key" />
+                </Button>
+                
+                <!-- Open Website -->
+                <Button Style="{StaticResource MaterialDesignIconButton}" 
+                       Command="{Binding OpenWebsiteCommand, ElementName=Root}" 
+                       CommandParameter="{Binding Account, ElementName=Root}"
+                       ToolTip="Open Website"
+                       Visibility="{Binding Account.Website, ElementName=Root, Converter={StaticResource StringToVisConverter}}">
+                    <materialDesign:PackIcon Kind="Web" />
+                </Button>
+                
+                <!-- Edit -->
+                <Button Style="{StaticResource MaterialDesignIconButton}" 
+                       Command="{Binding EditCommand, ElementName=Root}" 
+                       CommandParameter="{Binding Account, ElementName=Root}"
+                       ToolTip="Edit Account">
+                    <materialDesign:PackIcon Kind="Pencil" />
+                </Button>
+                
+                <!-- Delete -->
+                <Button Style="{StaticResource MaterialDesignIconButton}" 
+                       Command="{Binding DeleteCommand, ElementName=Root}" 
+                       CommandParameter="{Binding Account, ElementName=Root}"
+                       ToolTip="Delete Account"
+                       Foreground="{StaticResource DangerColor}">
+                    <materialDesign:PackIcon Kind="Delete" />
+                </Button>
+            </StackPanel>
+        </Grid>
+    </materialDesign:Card>
+</UserControl>

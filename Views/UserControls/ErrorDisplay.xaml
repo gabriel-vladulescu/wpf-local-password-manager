@@ -1,0 +1,124 @@
+<UserControl x:Class="AccountManager.Views.UserControls.ErrorDisplay"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:converters="clr-namespace:AccountManager.Views.Converters"
+             x:Name="Root">
+    
+    <UserControl.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+        <converters:StringToVisibilityConverter x:Key="StringToVisConverter"/>
+    </UserControl.Resources>
+
+    <Border Background="{StaticResource DangerColor}" 
+           CornerRadius="4" 
+           Padding="12"
+           Margin="8"
+           Visibility="{Binding HasError, ElementName=Root, Converter={StaticResource BoolToVisConverter}}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            
+            <!-- Main Error Display -->
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Error Icon -->
+                <materialDesign:PackIcon Grid.Column="0" 
+                                       Kind="AlertCircle" 
+                                       Width="20" 
+                                       Height="20" 
+                                       Foreground="White"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,8,0"/>
+                
+                <!-- Error Message -->
+                <TextBlock Grid.Column="1" 
+                          Text="{Binding ErrorMessage, ElementName=Root}" 
+                          FontSize="14" 
+                          Foreground="White"
+                          TextWrapping="Wrap"
+                          VerticalAlignment="Center"/>
+                
+                <!-- Details Toggle Button -->
+                <Button Grid.Column="2" 
+                       Style="{StaticResource MaterialDesignIconButton}" 
+                       Width="24" 
+                       Height="24"
+                       Click="OnToggleDetailsClick"
+                       ToolTip="Show Details"
+                       Visibility="{Binding ErrorDetails, ElementName=Root, Converter={StaticResource StringToVisConverter}}">
+                    <materialDesign:PackIcon Kind="ChevronDown" 
+                                           Width="16" 
+                                           Height="16" 
+                                           Foreground="White">
+                        <materialDesign:PackIcon.RenderTransform>
+                            <RotateTransform x:Name="DetailsToggleRotation"/>
+                        </materialDesign:PackIcon.RenderTransform>
+                    </materialDesign:PackIcon>
+                    <Button.Triggers>
+                        <DataTrigger Binding="{Binding ShowDetails, ElementName=Root}" Value="True">
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="DetailsToggleRotation" 
+                                                        Storyboard.TargetProperty="Angle" 
+                                                        To="180" 
+                                                        Duration="0:0:0.2"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.EnterActions>
+                            <DataTrigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="DetailsToggleRotation" 
+                                                        Storyboard.TargetProperty="Angle" 
+                                                        To="0" 
+                                                        Duration="0:0:0.2"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.ExitActions>
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+                
+                <!-- Dismiss Button -->
+                <Button Grid.Column="3" 
+                       Style="{StaticResource MaterialDesignIconButton}" 
+                       Width="24" 
+                       Height="24"
+                       Click="OnDismissClick"
+                       ToolTip="Dismiss">
+                    <materialDesign:PackIcon Kind="Close" 
+                                           Width="16" 
+                                           Height="16" 
+                                           Foreground="White"/>
+                </Button>
+            </Grid>
+            
+            <!-- Error Details -->
+            <Border Grid.Row="1" 
+                   Background="#20FFFFFF" 
+                   CornerRadius="2" 
+                   Padding="8"
+                   Margin="0,8,0,0"
+                   Visibility="{Binding ShowDetails, ElementName=Root, Converter={StaticResource BoolToVisConverter}}">
+                <ScrollViewer MaxHeight="120" 
+                             VerticalScrollBarVisibility="Auto">
+                    <TextBlock Text="{Binding ErrorDetails, ElementName=Root}" 
+                              FontSize="12" 
+                              FontFamily="Consolas"
+                              Foreground="White"
+                              TextWrapping="Wrap"/>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

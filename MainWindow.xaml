@@ -1,0 +1,690 @@
+<Window x:Class="AccountManager.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:local="clr-namespace:AccountManager"
+        xmlns:services="clr-namespace:AccountManager.Services"
+        xmlns:converters="clr-namespace:AccountManager.Views.Converters"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        Background="{DynamicResource MainBackgroundColor}"
+        FontFamily="{materialDesign:MaterialDesignFont}"
+        Title="PassVault" 
+        Width="1200" Height="800"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        WindowState="Normal"
+        WindowStyle="None"
+        AllowsTransparency="False">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" 
+                      ResizeBorderThickness="0" 
+                      GlassFrameThickness="0" 
+                      NonClientFrameEdges="None"/>
+    </WindowChrome.WindowChrome>
+
+    <Grid>
+        <Grid x:Name="MainContent">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="320"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Custom Title Bar -->
+            <Border Grid.Row="0" Grid.ColumnSpan="2" 
+                    Background="{DynamicResource CardBackgroundColor}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="130"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Logo and Title in Sidebar Area -->
+                    <StackPanel Grid.Column="0" 
+                        Orientation="Horizontal" 
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Background="{DynamicResource SidebarColor}">
+                        <Border Width="34" Height="34" 
+                                            CornerRadius="12"
+                                            VerticalAlignment="Center">
+                            <Image Width="29" Height="29"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center">
+                                <Image.Style>
+                                    <Style TargetType="Image">
+                                        <Setter Property="Source" Value="pack://application:,,,/Assets/logo-light.png"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ThemeService.IsDarkMode}" Value="True">
+                                                <Setter Property="Source" Value="pack://application:,,,/Assets/logo-dark.png"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Image.Style>
+                            </Image>
+                        </Border>
+                        <TextBlock Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=Title}"
+                                Foreground="{DynamicResource SidebarTextPrimaryColor}"
+                                FontSize="14" 
+                                FontWeight="Bold"
+                                VerticalAlignment="Center"
+                                Margin="8,0,0,0"/>
+                    </StackPanel>
+
+                    <!-- Draggable Area -->
+                    <Border Grid.Column="1" 
+                            Background="Transparent"
+                            MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"/>
+                    
+                    <!-- Window Control Buttons -->
+                    <StackPanel Grid.Column="2" 
+                            Orientation="Horizontal" 
+                            VerticalAlignment="Center"
+                            Margin="0,0,8,0">
+                        <!-- Minimize Button -->
+                        <Button Style="{StaticResource WindowControlButton}"
+                                Click="MinimizeButton_Click"
+                                ToolTip="Minimize">
+                            <materialDesign:PackIcon Kind="WindowMinimize" 
+                                                Foreground="{DynamicResource TextSecondaryColor}" 
+                                                Width="16" Height="16"/>
+                        </Button>
+                        
+                        <!-- Maximize/Restore Button -->
+                        <Button x:Name="MaximizeRestoreButton"
+                                Style="{StaticResource WindowControlButton}"
+                                Click="MaximizeButton_Click"
+                                ToolTip="Maximize">
+                            <materialDesign:PackIcon x:Name="MaximizeRestoreIcon"
+                                                Kind="WindowMaximize" 
+                                                Foreground="{DynamicResource TextSecondaryColor}" 
+                                                Width="16" Height="16"/>
+                        </Button>
+                        
+                        <!-- Close Button -->
+                        <Button Style="{StaticResource WindowControlCloseButton}"
+                                Click="CloseButton_Click"
+                                ToolTip="Close">
+                            <materialDesign:PackIcon Kind="Close" 
+                                                Foreground="White" 
+                                                Width="16" Height="16"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <!-- Full Height Sidebar -->
+            <Border Grid.Row="1" Grid.Column="0" 
+                    Background="{DynamicResource SidebarColor}"
+                    CornerRadius="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="20"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- App Logo and Title in Sidebar -->
+                    <!-- <Grid Grid.Row="0" Margin="24,24,24,20">
+                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                            <Border Width="40" Height="40" 
+                                    CornerRadius="12"
+                                    VerticalAlignment="Center">
+                                <Image Width="40" Height="40"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center">
+                                    <Image.Style>
+                                        <Style TargetType="Image">
+                                            <Setter Property="Source" Value="pack://application:,,,/Assets/logo-light.png"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ThemeService.IsDarkMode}" Value="True">
+                                                    <Setter Property="Source" Value="pack://application:,,,/Assets/logo-dark.png"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Image.Style>
+                                </Image>
+                            </Border>
+                        </StackPanel>
+                    </Grid> -->
+
+                    <!-- Groups Header -->
+                    <StackPanel Grid.Row="1" Margin="24,0,24,20">
+                        <TextBlock Text="Groups" 
+                                Foreground="{DynamicResource SidebarTextPrimaryColor}"
+                                FontSize="18" 
+                                FontWeight="Bold"/>
+                        <TextBlock Text="Organize your accounts" 
+                                Foreground="{DynamicResource SidebarTextSecondaryColor}" 
+                                Opacity="0.7"
+                                FontSize="13"
+                                Margin="0,4,0,0"/>
+                    </StackPanel>
+
+                    <!-- Groups List -->
+                    <ListBox Grid.Row="2" 
+                        ItemsSource="{Binding Groups}"
+                        SelectedItem="{Binding SelectedGroup}"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Margin="0,0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="8,12,0,12" 
+                                    CornerRadius="12"
+                                    Margin="0,3">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>          
+                                            <ColumnDefinition Width="Auto"/>          
+                                            <ColumnDefinition Width="Auto"/>       
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <!-- Group Icon -->
+                                        <Border Grid.Column="0" 
+                                            Background="{StaticResource PrimaryColor}"
+                                            Width="40" Height="40"
+                                            CornerRadius="20">
+                                            <materialDesign:PackIcon Kind="Folder" 
+                                                                Foreground="White"
+                                                                Width="20" Height="20"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"/>
+                                        </Border>
+                                        
+                                        <!-- Group Info -->
+                                        <StackPanel Grid.Column="1" 
+                                                Margin="14,0,10,0"
+                                                VerticalAlignment="Center" 
+                                                HorizontalAlignment="Right"
+                                                    MinWidth="150"
+                                                    MaxWidth="150">
+                                            <TextBlock Text="{Binding Name}" 
+                                                    Foreground="{DynamicResource SidebarTextPrimaryColor}"
+                                                    FontSize="15" 
+                                                    FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding Accounts.Count, StringFormat={}{0} accounts}" 
+                                                    Foreground="{DynamicResource SidebarTextSecondaryColor}"
+                                                    Opacity="0.7"
+                                                    FontSize="12"/>
+                                        </StackPanel>
+                                        <!-- Action Buttons -->
+                                        <StackPanel Grid.Column="2"
+                                                Orientation="Horizontal" 
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Stretch">
+                                            <Button Style="{StaticResource MaterialDesignIconButton}"
+                                                Command="{Binding DataContext.EditGroupCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"
+                                                Width="32" Height="32"
+                                                ToolTip="Edit Group">
+                                                <materialDesign:PackIcon Kind="Pencil" 
+                                                    Foreground="{DynamicResource SidebarTextSecondaryColor}" 
+                                                    Opacity="0.7"
+                                                    Width="16" Height="16"/>
+                                            </Button>
+                                            <Button Style="{StaticResource MaterialDesignIconButton}"
+                                                Command="{Binding DataContext.DeleteGroupCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"
+                                                Width="32" Height="32"
+                                                ToolTip="Delete Group"
+                                                Margin="4,0,0,0">
+                                                <materialDesign:PackIcon Kind="Delete" 
+                                                                    Foreground="{StaticResource DangerColor}" 
+                                                                    Width="16" Height="16"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- Add Group Button -->
+                    <Button Grid.Row="3" 
+                        Style="{StaticResource PrimaryButton}"
+                        Command="{Binding AddGroupCommand}"
+                        Margin="24,16,24,24">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Plus" 
+                                                Foreground="White"
+                                                VerticalAlignment="Center"
+                                                Width="18" Height="18"/>
+                            <TextBlock Text="Add Group" 
+                                    Foreground="White"
+                                    Margin="10,0,0,0"
+                                    FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Main Content Area -->
+            <Grid Grid.Row="1" Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header with Search and Controls -->
+                <Grid Grid.Row="0" 
+                    Background="Transparent"
+                    Height="60">
+                    <Grid Margin="12,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <!-- Global Search Bar -->
+                        <Border Grid.Column="0" 
+                            
+                            CornerRadius="12" 
+                            
+                            MaxWidth="400"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <materialDesign:PackIcon Grid.Column="0" 
+                                                    Kind="Magnify" 
+                                                    Foreground="{DynamicResource TextSecondaryColor}"
+                                                    Width="20" Height="20"
+                                                    Margin="16,0,12,0"
+                                                    VerticalAlignment="Center"/>
+                                
+                                <TextBox Grid.Column="1"
+                                    Text="{Binding GlobalSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                    Background="Transparent"
+                                    Foreground="{DynamicResource TextPrimaryColor}"
+                                    BorderThickness="0"
+                                    FontSize="13"
+                                    MinWidth="300"
+                                    VerticalAlignment="Center"
+                                    Margin="0,6"
+                                    materialDesign:HintAssist.Hint="Search all accounts..."
+                                    materialDesign:HintAssist.Foreground="{DynamicResource TextSecondaryColor}"/>
+
+                                <!-- Clear Search Button -->
+                                <Button Grid.Column="2" 
+                                    Style="{StaticResource MaterialDesignIconButton}"
+                                    Command="{Binding ClearGlobalSearchCommand}"
+                                    Width="32" Height="32"
+                                    Margin="0,0,8,0"
+                                    Visibility="{Binding GlobalSearchText, Converter={StaticResource StringToVisibilityConverter}}">
+                                    <materialDesign:PackIcon Kind="Close" 
+                                                            Foreground="{DynamicResource TextSecondaryColor}" 
+                                                            Width="16" Height="16"/>
+                                </Button>
+                            </Grid>
+                        </Border>
+                        
+                        <!-- Right Controls -->
+                        <StackPanel Grid.Column="1" 
+                                  Orientation="Horizontal" 
+                                  HorizontalAlignment="Right" 
+                                  VerticalAlignment="Center">
+                            <!-- Theme Toggle Button -->
+                            <Button Style="{StaticResource ThemeToggleButton}"
+                                Command="{Binding ToggleThemeCommand}"
+                                ToolTip="{Binding ThemeService.ThemeDisplayName, StringFormat='Switch to {0} Mode'}"
+                                Margin="0,0,12,0">
+                                <materialDesign:PackIcon Kind="{Binding ThemeService.IsDarkMode, 
+                                                        Converter={StaticResource BoolToIconConverter}, 
+                                                        ConverterParameter='WeatherSunny|WeatherNight'}" 
+                                                    Foreground="{DynamicResource TextPrimaryColor}" 
+                                                    Width="20" Height="20"/>
+                            </Button>
+                            
+                            <!-- Fullscreen Toggle Button -->
+                            <Button Style="{StaticResource ThemeToggleButton}"
+                                Click="ToggleFullscreen_Click"
+                                ToolTip="Toggle Fullscreen"
+                                Margin="0,0,12,0">
+                                <materialDesign:PackIcon x:Name="FullscreenIcon"
+                                                    Kind="Fullscreen" 
+                                                    Foreground="{DynamicResource TextPrimaryColor}" 
+                                                    Width="20" Height="20"/>
+                            </Button>
+                            
+                            <!-- Settings Button -->
+                            <Button Style="{StaticResource MaterialDesignIconButton}"
+                                    Click="SettingsButton_Click">
+                                <materialDesign:PackIcon Kind="Cog" 
+                                                        Foreground="{DynamicResource TextPrimaryColor}" 
+                                                        Width="20" Height="20"/>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+
+                <!-- Error Alert with Animation -->
+                <materialDesign:Card Grid.Row="1" 
+                                Background="{StaticResource DangerColor}"
+                                Margin="16,16,16,8"
+                                Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Border CornerRadius="8">
+                        <Grid Margin="16,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <materialDesign:PackIcon Grid.Column="0"
+                                                Kind="AlertCircle" 
+                                                VerticalAlignment="Center"
+                                                Foreground="White"
+                                                Width="20" Height="20"/>
+                            
+                            <TextBlock Grid.Column="1"
+                                    Text="{Binding ErrorMessage}"
+                                    Foreground="White"
+                                    VerticalAlignment="Center"
+                                    Margin="12,0,12,0"
+                                    FontWeight="Medium"
+                                    TextWrapping="Wrap"/>
+                            
+                            <Button Grid.Column="2"
+                                Style="{StaticResource MaterialDesignIconButton}"
+                                Command="{Binding DismissErrorCommand}">
+                                <materialDesign:PackIcon Kind="Close" 
+                                                    Foreground="White" 
+                                                    Width="16" Height="16"/>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </materialDesign:Card>
+
+                <!-- Main Content -->
+                <Grid Grid.Row="2" Margin="16,0,16,16">
+                    <!-- Accounts Content -->
+                    <Border Background="{DynamicResource CardBackgroundColor}"
+                            CornerRadius="16"
+                            BorderBrush="{DynamicResource BorderColor}"
+                            BorderThickness="1"
+                            Visibility="{Binding IsAccountsPanelVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border.Effect>
+                            <DropShadowEffect Color="Black" Opacity="0.03" ShadowDepth="2" BlurRadius="8"/>
+                        </Border.Effect>
+                        
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Enhanced Header with Breadcrumb -->
+                            <Grid Grid.Row="0" Margin="32,32,32,20">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                
+                                <!-- Breadcrumb -->
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                                    <TextBlock Text="{Binding BreadcrumbText}" 
+                                            Foreground="{DynamicResource TextSecondaryColor}"
+                                            FontSize="12"/>
+                                </StackPanel>
+                                
+                                <!-- Header with Count -->
+                                <Grid Grid.Row="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="{Binding HeaderIcon}" 
+                                                            VerticalAlignment="Center" 
+                                                            Foreground="{StaticResource PrimaryColor}"
+                                                            Width="28" Height="28"/>
+                                        <TextBlock Text="{Binding HeaderTitle}" 
+                                                FontSize="24" 
+                                                FontWeight="Bold"
+                                                Foreground="{DynamicResource TextPrimaryColor}"
+                                                Margin="12,0,0,0" 
+                                                VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    
+                                    <!-- Account Count Badge -->
+                                    <Border Grid.Column="1"
+                                        Background="{StaticResource PrimaryColor}"
+                                        CornerRadius="12" 
+                                        Padding="12,8">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="AccountMultiple" 
+                                                                Foreground="White" 
+                                                                Width="14" Height="14"
+                                                                VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding HeaderSubtitle}" 
+                                                    Foreground="White" 
+                                                    FontSize="12"
+                                                    FontWeight="SemiBold"
+                                                    Margin="6,0,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </Grid>
+
+                            <!-- Enhanced Search Bar -->
+                            <Border Grid.Row="1" 
+                                Background="{DynamicResource SearchBackgroundColor}" 
+                                CornerRadius="12" 
+                                Margin="32,0,32,24"
+                                BorderBrush="{DynamicResource BorderColor}"
+                                BorderThickness="1"
+                                Visibility="{Binding Source={x:Static services:SettingsService.Instance}, 
+                                    Path=EnableLocalSearch, 
+                                    Converter={StaticResource BooleanToVisibilityConverter}}"
+                                >
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <materialDesign:PackIcon Grid.Column="0" 
+                                                        Kind="Magnify" 
+                                                        Foreground="{DynamicResource TextSecondaryColor}"
+                                                        Width="20" Height="20"
+                                                        Margin="16,0,12,0"
+                                                        VerticalAlignment="Center"/>
+                                    
+                                    <TextBox Grid.Column="1"
+                                        Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                        Background="Transparent"
+                                        Foreground="{DynamicResource TextPrimaryColor}"
+                                        BorderThickness="0"
+                                        FontSize="14"
+                                        VerticalAlignment="Center"
+                                        Margin="0,12"
+                                        materialDesign:HintAssist.Hint="Search in this group..."
+                                        materialDesign:HintAssist.Foreground="{DynamicResource TextSecondaryColor}"/>
+                                    
+                                    <!-- Clear Search Button -->
+                                    <Button Grid.Column="2" 
+                                        Style="{StaticResource MaterialDesignIconButton}"
+                                        Command="{Binding ClearSearchCommand}"
+                                        Width="32" Height="32"
+                                        Margin="0,0,8,0"
+                                        Visibility="{Binding SearchText, Converter={StaticResource StringToVisibilityConverter}}">
+                                        <materialDesign:PackIcon Kind="Close" 
+                                                            Foreground="{DynamicResource TextSecondaryColor}" 
+                                                            Width="16" Height="16"/>
+                                    </Button>
+                                </Grid>
+                            </Border>
+
+                            <!-- Enhanced Grid Layout for Accounts -->
+                            <ScrollViewer Grid.Row="2" Margin="24,0,24,24" 
+                                        VerticalScrollBarVisibility="Auto"
+                                        Style="{StaticResource ModernScrollViewer}">
+                                <ItemsControl ItemsSource="{Binding DisplayedAccounts}"
+                                            ItemTemplate="{StaticResource ModernAccountCardTemplate}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal" 
+                                                    ItemWidth="250"
+                                                    ItemHeight="Auto"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </ScrollViewer>
+
+                            <!-- Enhanced No Accounts State -->
+                            <StackPanel Grid.Row="2" 
+                                    VerticalAlignment="Center" 
+                                    HorizontalAlignment="Center">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DisplayedAccounts.Count}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
+                                
+                                <Border Background="{DynamicResource EmptyStateBackgroundColor}" 
+                                    Width="120" Height="120" 
+                                    CornerRadius="60"
+                                    HorizontalAlignment="Center">
+                                    <materialDesign:PackIcon Kind="{Binding EmptyStateIcon}" 
+                                                        Width="60" Height="60" 
+                                                        Foreground="{DynamicResource TextSecondaryColor}"
+                                                        Opacity="0.5"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="{Binding EmptyStateTitle}" 
+                                        FontSize="20" 
+                                        FontWeight="SemiBold"
+                                        Foreground="{DynamicResource TextSecondaryColor}"
+                                        HorizontalAlignment="Center"
+                                        Margin="0,20,0,8"/>
+                                <TextBlock Text="{Binding EmptyStateMessage}" 
+                                        Foreground="{DynamicResource TextSecondaryColor}"
+                                        Opacity="0.8"
+                                        HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- FLOATING ACTION BUTTON -->
+                    <Button Style="{StaticResource FABStyle}"
+                        Command="{Binding AddAccountCommand}"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Bottom"
+                        Margin="0,0,32,32"
+                        ToolTip="Add New Account"
+                        Visibility="{Binding IsAccountsPanelVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <materialDesign:PackIcon Kind="Plus" 
+                                            Foreground="White"
+                                            Width="24" Height="24"/>
+                    </Button>
+
+                    <!-- Enhanced Empty States -->
+                    <StackPanel VerticalAlignment="Center" 
+                            HorizontalAlignment="Center"
+                            Visibility="{Binding IsEmptyStateVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border Background="{DynamicResource EmptyStateBackgroundColor}" 
+                            Width="140" Height="140" 
+                            CornerRadius="70">
+                            <materialDesign:PackIcon Kind="FolderOpen" 
+                                                Width="70" Height="70" 
+                                                Foreground="{DynamicResource TextSecondaryColor}"
+                                                Opacity="0.5"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="Select a group" 
+                                FontSize="24" 
+                                FontWeight="Bold"
+                                Foreground="{DynamicResource TextSecondaryColor}"
+                                HorizontalAlignment="Center"
+                                Margin="0,24,0,8"/>
+                        <TextBlock Text="Choose a group from the sidebar to view your accounts" 
+                                Foreground="{DynamicResource TextSecondaryColor}"
+                                FontSize="14"
+                                Opacity="0.8"
+                                HorizontalAlignment="Center"
+                                TextAlignment="Center"/>
+                    </StackPanel>
+
+                    <StackPanel VerticalAlignment="Center" 
+                            HorizontalAlignment="Center"
+                            Visibility="{Binding IsNoGroupsStateVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border Background="{DynamicResource EmptyStateBackgroundColor}" 
+                            Width="140" Height="140" 
+                            CornerRadius="70">
+                            <materialDesign:PackIcon Kind="FolderPlus" 
+                                                Width="70" Height="70" 
+                                                Foreground="{DynamicResource TextSecondaryColor}"
+                                                Opacity="0.5"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="Create your first group" 
+                                FontSize="24" 
+                                FontWeight="Bold"
+                                Foreground="{DynamicResource TextSecondaryColor}"
+                                HorizontalAlignment="Center"
+                                Margin="0,24,0,8"/>
+                        <TextBlock Text="Groups help you organize your accounts by category" 
+                                Foreground="{DynamicResource TextSecondaryColor}"
+                                FontSize="14"
+                                Opacity="0.8"
+                                HorizontalAlignment="Center"
+                                TextAlignment="Center"/>
+                        <Button Content="Get Started" 
+                            Background="{StaticResource PrimaryColor}"
+                            Foreground="White"
+                            BorderThickness="0"
+                            Command="{Binding AddGroupCommand}"
+                            Margin="0,24,0,0"
+                            Height="40"
+                            Padding="20,0">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            CornerRadius="20">
+                                        <ContentPresenter HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        Margin="{TemplateBinding Padding}"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+
+        </Grid>
+        <!-- Custom Dialog Overlay -->
+        <Grid x:Name="DialogOverlay"
+            Background="#60000000"
+            Visibility="Collapsed"
+            Panel.ZIndex="10000">
+            
+            <ContentPresenter x:Name="DialogContent"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"/>
+        </Grid>
+    </Grid>
+</Window>
