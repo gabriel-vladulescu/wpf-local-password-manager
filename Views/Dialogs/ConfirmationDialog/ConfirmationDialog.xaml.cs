@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows.Controls;
 using AccountManager.Models;
+using AccountManager.ViewModels;
 
 namespace AccountManager.Views.Dialogs
 {

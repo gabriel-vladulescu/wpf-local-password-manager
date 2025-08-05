@@ -51,7 +51,7 @@
                             Padding="4,1"
                             Margin="6,0,0,0"
                             VerticalAlignment="Center">
-                        <TextBlock Text="v1.1.0"
+                        <TextBlock Text="v1.1.1"
                                    Foreground="White"
                                    FontSize="9"
                                    FontWeight="SemiBold"/>
