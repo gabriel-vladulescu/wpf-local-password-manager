@@ -1,0 +1,98 @@
+<UserControl x:Class="AccountManager.Views.Window.Content.ContentContainer"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:contentViews="clr-namespace:AccountManager.Views.Window.Content"
+             xmlns:searchViews="clr-namespace:AccountManager.Views.Window.Search"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+
+    <Grid Margin="16,0,16,16">
+        <!-- Accounts Content -->
+        <Border Background="{DynamicResource CardBackgroundColor}"
+                CornerRadius="16"
+                BorderBrush="{DynamicResource BorderColor}"
+                BorderThickness="1"
+                Visibility="{Binding IsAccountsPanelVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border.Effect>
+                <DropShadowEffect Color="Black" Opacity="0.03" ShadowDepth="2" BlurRadius="8"/>
+            </Border.Effect>
+            
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Enhanced Header with Breadcrumb -->
+                <Grid Grid.Row="0" Margin="32,32,32,20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Breadcrumb -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="{Binding BreadcrumbText}" 
+                                  Foreground="{DynamicResource TextSecondaryColor}"
+                                  FontSize="12"/>
+                    </StackPanel>
+                    
+                    <!-- Header with Count -->
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="{Binding HeaderIcon}" 
+                                                    VerticalAlignment="Center" 
+                                                    Foreground="{StaticResource PrimaryColor}"
+                                                    Width="28" Height="28"/>
+                            <TextBlock Text="{Binding HeaderTitle}" 
+                                      FontSize="24" 
+                                      FontWeight="Bold"
+                                      Foreground="{DynamicResource TextPrimaryColor}"
+                                      Margin="12,0,0,0" 
+                                      VerticalAlignment="Center"/>
+                        </StackPanel>
+                        
+                        <!-- Account Count Badge -->
+                        <Border Grid.Column="1"
+                                Background="{StaticResource PrimaryColor}"
+                                CornerRadius="12" 
+                                Padding="12,8">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="AccountMultiple" 
+                                                        Foreground="White" 
+                                                        Width="14" Height="14"
+                                                        VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding HeaderSubtitle}" 
+                                          Foreground="White" 
+                                          FontSize="12"
+                                          FontWeight="SemiBold"
+                                          Margin="6,0,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Grid>
+
+                <!-- Local Search Bar -->
+                <searchViews:LocalSearch Grid.Row="1" />
+
+                <!-- Main Content Area -->
+                <Grid Grid.Row="2">
+                    <!-- Account Grid -->
+                    <contentViews:AccountGrid />
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- Floating Action Button -->
+        <contentViews:FloatingActions />
+    </Grid>
+
+</UserControl>

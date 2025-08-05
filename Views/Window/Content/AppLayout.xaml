@@ -1,0 +1,98 @@
+<UserControl x:Class="AccountManager.Views.Window.Content.AppLayout"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:titleBarViews="clr-namespace:AccountManager.Views.Window.TitleBar"
+             xmlns:navigationViews="clr-namespace:AccountManager.Views.Window.Navigation"
+             xmlns:contentViews="clr-namespace:AccountManager.Views.Window.Content"
+             xmlns:searchViews="clr-namespace:AccountManager.Views.Window.Search"
+             xmlns:controlsViews="clr-namespace:AccountManager.Views.Window.Controls"
+             xmlns:notificationsViews="clr-namespace:AccountManager.Views.Window.Notifications"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+
+    <Grid>
+        <!-- Main Application Layout -->
+        <Grid x:Name="MainContent">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="320"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Custom Title Bar -->
+            <Border Grid.Row="0" Grid.ColumnSpan="2" 
+                    Background="{DynamicResource CardBackgroundColor}">
+                <Grid>
+                    <titleBarViews:WindowChrome />
+                    <titleBarViews:WindowControls />
+                </Grid>
+            </Border>
+            
+            <!-- Left Sidebar -->
+            <navigationViews:Sidebar Grid.Row="1" Grid.Column="0" />
+
+            <!-- Main Content Area -->
+            <Grid Grid.Row="1" Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Content Header with Search and Controls -->
+                <Grid Grid.Row="0" Background="Transparent" Height="60">
+                    <Grid Margin="12,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <!-- Global Search Bar -->
+                        <searchViews:GlobalSearch Grid.Column="0" />
+                        
+                        <!-- Right Controls -->
+                        <StackPanel Grid.Column="1" 
+                                  Orientation="Horizontal" 
+                                  HorizontalAlignment="Right" 
+                                  VerticalAlignment="Center">
+                            <!-- Theme Toggle Button -->
+                            <controlsViews:ThemeToggle />
+                            
+                            <!-- Settings Button -->
+                            <controlsViews:SettingsButton />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+
+                <!-- Error Alert -->
+                <notificationsViews:ErrorAlert Grid.Row="1" />
+
+                <!-- Main Content Area -->
+                <Grid Grid.Row="2">
+                    <!-- Content Container (when accounts panel should be visible) -->
+                    <contentViews:ContentContainer Visibility="{Binding IsAccountsPanelVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    
+                    <!-- Empty States (when no group selected or no groups exist) -->
+                    <contentViews:EmptyStates />
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <!-- Dialog Overlay System -->
+        <Grid x:Name="DialogOverlayGrid"
+              Background="#60000000"
+              Visibility="Collapsed"
+              Panel.ZIndex="10000">
+            
+            <ContentPresenter x:Name="DialogContent"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center"/>
+        </Grid>
+    </Grid>
+
+</UserControl>

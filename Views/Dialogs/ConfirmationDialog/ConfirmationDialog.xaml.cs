@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Windows.Controls;
-using System.Windows.Input;
 using AccountManager.Models;
-using AccountManager.ViewModels;
 
 namespace AccountManager.Views.Dialogs
 {
@@ -11,48 +9,33 @@ namespace AccountManager.Views.Dialogs
     {
         public bool? DialogResult { get; private set; }
         public event EventHandler DialogClosed;
+        public ConfirmationDialogViewModel ViewModel => DataContext as ConfirmationDialogViewModel;
 
         public ConfirmationDialog()
         {
             InitializeComponent();
         }
 
-        public ConfirmationDialogViewModel ViewModel => DataContext as ConfirmationDialogViewModel;
-
         public void SetupForGroupDelete(AccountGroup group)
         {
-            var viewModel = new ConfirmationDialogViewModel();
-            viewModel.SetupGroupDeleteConfirmation(group);
-            
-            // Subscribe to the close request event
-            viewModel.RequestClose += (sender, result) => {
-                DialogResult = result;
-                DialogClosed?.Invoke(this, EventArgs.Empty);
-            };
-            
-            DataContext = viewModel;
+            SetupDialog(vm => vm.SetupGroupDeleteConfirmation(group));
         }
 
         public void SetupForAccountDelete(Account account)
         {
-            var viewModel = new ConfirmationDialogViewModel();
-            viewModel.SetupAccountDeleteConfirmation(account);
-            
-            // Subscribe to the close request event
-            viewModel.RequestClose += (sender, result) => {
-                DialogResult = result;
-                DialogClosed?.Invoke(this, EventArgs.Empty);
-            };
-            
-            DataContext = viewModel;
+            SetupDialog(vm => vm.SetupAccountDeleteConfirmation(account));
         }
 
         public void SetupForAccountEdit(List<string> changes)
         {
+            SetupDialog(vm => vm.SetupAccountEditConfirmation(changes));
+        }
+
+        private void SetupDialog(Action<ConfirmationDialogViewModel> setupAction)
+        {
             var viewModel = new ConfirmationDialogViewModel();
-            viewModel.SetupAccountEditConfirmation(changes);
+            setupAction(viewModel);
             
-            // Subscribe to the close request event
             viewModel.RequestClose += (sender, result) => {
                 DialogResult = result;
                 DialogClosed?.Invoke(this, EventArgs.Empty);

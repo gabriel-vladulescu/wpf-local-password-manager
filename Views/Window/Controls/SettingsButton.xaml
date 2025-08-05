@@ -1,0 +1,17 @@
+<UserControl x:Class="AccountManager.Views.Window.Controls.SettingsButton"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+
+    <!-- Settings Button -->
+    <Button Style="{StaticResource MaterialDesignIconButton}"
+            Click="SettingsButton_Click">
+        <materialDesign:PackIcon Kind="Cog" 
+                                Foreground="{DynamicResource TextPrimaryColor}" 
+                                Width="20" Height="20"/>
+    </Button>
+
+</UserControl>

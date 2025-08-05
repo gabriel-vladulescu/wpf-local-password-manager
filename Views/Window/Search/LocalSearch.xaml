@@ -1,0 +1,58 @@
+<UserControl x:Class="AccountManager.Views.Window.Search.LocalSearch"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:services="clr-namespace:AccountManager.Services"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+
+    <!-- Enhanced Search Bar -->
+    <Border Background="{DynamicResource SearchBackgroundColor}" 
+            CornerRadius="12" 
+            Margin="32,0,32,24"
+            BorderBrush="{DynamicResource BorderColor}"
+            BorderThickness="1"
+            Visibility="{Binding Source={x:Static services:SettingsService.Instance}, 
+                Path=EnableLocalSearch, 
+                Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <materialDesign:PackIcon Grid.Column="0" 
+                                    Kind="Magnify" 
+                                    Foreground="{DynamicResource TextSecondaryColor}"
+                                    Width="20" Height="20"
+                                    Margin="16,0,12,0"
+                                    VerticalAlignment="Center"/>
+            
+            <TextBox Grid.Column="1"
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     Background="Transparent"
+                     Foreground="{DynamicResource TextPrimaryColor}"
+                     BorderThickness="0"
+                     FontSize="14"
+                     VerticalAlignment="Center"
+                     Margin="0,12"
+                     materialDesign:HintAssist.Hint="Search in this group..."
+                     materialDesign:HintAssist.Foreground="{DynamicResource TextSecondaryColor}"/>
+            
+            <!-- Clear Search Button -->
+            <Button Grid.Column="2" 
+                    Style="{StaticResource MaterialDesignIconButton}"
+                    Command="{Binding ClearSearchCommand}"
+                    Width="32" Height="32"
+                    Margin="0,0,8,0"
+                    Visibility="{Binding SearchText, Converter={StaticResource StringToVisibilityConverter}}">
+                <materialDesign:PackIcon Kind="Close" 
+                                        Foreground="{DynamicResource TextSecondaryColor}" 
+                                        Width="16" Height="16"/>
+            </Button>
+        </Grid>
+    </Border>
+
+</UserControl>

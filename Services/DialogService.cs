@@ -1,8 +1,11 @@
 using System;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using AccountManager.Views.Dialogs;
+using AccountManager.Views.Window;
+using AccountManager.Views.Window.Content;
 
 namespace AccountManager
 {
@@ -15,135 +18,119 @@ namespace AccountManager
         public static void Initialize(MainWindow mainWindow)
         {
             _mainWindow = mainWindow;
-            _overlay = mainWindow.FindName("DialogOverlay") as Grid;
-            _content = mainWindow.FindName("DialogContent") as ContentPresenter;
+            
+            var appLayout = FindVisualChild<AppLayout>(mainWindow);
+            if (appLayout != null)
+            {
+                _overlay = appLayout.FindName("DialogOverlayGrid") as Grid;
+                _content = appLayout.FindName("DialogContent") as ContentPresenter;
+            }
         }
 
-        public static async System.Threading.Tasks.Task<bool?> ShowDialogAsync(UserControl dialog)
+        private static T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+        {
+            for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+                
+                if (child is T result)
+                    return result;
+                
+                var childResult = FindVisualChild<T>(child);
+                if (childResult != null)
+                    return childResult;
+            }
+            return null;
+        }
+
+        public static async Task<bool?> ShowDialogAsync(UserControl dialog)
         {
             if (_overlay == null || _content == null)
                 return false;
 
-            var tcs = new System.Threading.Tasks.TaskCompletionSource<bool?>();
+            var tcs = new TaskCompletionSource<bool?>();
             
-            // Set up dialog content
             _content.Content = dialog;
             _overlay.Visibility = Visibility.Visible;
 
-            // Handle dialog result
-            if (dialog is GroupDialog groupDialog)
-            {
-                SetupGroupDialogHandlers(groupDialog, tcs);
-            }
-            else if (dialog is AccountDialog accountDialog)
-            {
-                SetupAccountDialogHandlers(accountDialog, tcs);
-            }
-            else if (dialog is SettingsDialog settingsDialog)
-            {
-                SetupSettingsDialogHandlers(settingsDialog, tcs);
-            }
-
-            // Handle overlay click to close
-            var overlayHandler = new MouseButtonEventHandler((s, e) => {
-                if (e.OriginalSource == _overlay)
-                {
-                    CloseDialog();
-                    tcs.TrySetResult(false);
-                }
-            });
-            _overlay.MouseLeftButtonDown += overlayHandler;
+            SetupDialogHandlers(dialog, tcs);
+            SetupOverlayClickHandler(tcs);
 
             var result = await tcs.Task;
-
-            // Cleanup
-            _overlay.MouseLeftButtonDown -= overlayHandler;
             CloseDialog();
-
             return result;
         }
 
-        private static void SetupGroupDialogHandlers(GroupDialog dialog, System.Threading.Tasks.TaskCompletionSource<bool?> tcs)
+        private static void SetupDialogHandlers(UserControl dialog, TaskCompletionSource<bool?> tcs)
         {
-            // Use a small delay to ensure the dialog is fully loaded
-            System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
+            switch (dialog)
             {
-                var cancelButton = FindButtonByContent(dialog, "Cancel");
-                var saveButton = FindButtonByContent(dialog, dialog.ViewModel?.ActionButtonText ?? "Save Changes");
-
-                if (cancelButton != null)
-                {
-                    cancelButton.Click += (s, e) => tcs.TrySetResult(false);
-                    System.Diagnostics.Debug.WriteLine("Cancel button handler attached");
-                }
-
-                if (saveButton != null)
-                {
-                    saveButton.Click += (s, e) => {
-                        if (dialog.ViewModel?.CanSave == true)
-                        {
-                            tcs.TrySetResult(true);
-                        }
-                    };
-                    System.Diagnostics.Debug.WriteLine("Save button handler attached");
-                }
-            }), System.Windows.Threading.DispatcherPriority.Loaded);
+                case GroupDialog groupDialog:
+                    SetupButtonHandlers(groupDialog, tcs, groupDialog.ViewModel?.ActionButtonText ?? "Save Changes");
+                    break;
+                case AccountDialog accountDialog:
+                    SetupButtonHandlers(accountDialog, tcs, accountDialog.ViewModel?.ActionButtonText);
+                    break;
+                case ConfirmationDialog confirmDialog:
+                    confirmDialog.DialogClosed += (s, e) => tcs.TrySetResult(confirmDialog.DialogResult);
+                    break;
+                case SettingsDialog settingsDialog:
+                    SetupButtonHandlers(settingsDialog, tcs, null);
+                    break;
+            }
         }
 
-        private static void SetupAccountDialogHandlers(AccountDialog dialog, System.Threading.Tasks.TaskCompletionSource<bool?> tcs)
+        private static void SetupButtonHandlers(UserControl dialog, TaskCompletionSource<bool?> tcs, string saveButtonText)
         {
             System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
             {
                 var cancelButton = FindButtonByContent(dialog, "Cancel");
-                var saveButton = FindButtonByContent(dialog, dialog.ViewModel?.ActionButtonText);
+                var saveButton = saveButtonText != null ? FindButtonByContent(dialog, saveButtonText) : null;
 
                 if (cancelButton != null)
-                {
                     cancelButton.Click += (s, e) => tcs.TrySetResult(false);
-                }
 
                 if (saveButton != null)
                 {
                     saveButton.Click += (s, e) => {
-                        if (dialog.ViewModel?.CanSave == true)
+                        var canSave = dialog switch
                         {
+                            GroupDialog gd => gd.ViewModel?.CanSave == true,
+                            AccountDialog ad => ad.ViewModel?.CanSave == true,
+                            _ => true
+                        };
+                        
+                        if (canSave)
                             tcs.TrySetResult(true);
-                        }
                     };
                 }
             }), System.Windows.Threading.DispatcherPriority.Loaded);
         }
 
-        private static void SetupSettingsDialogHandlers(SettingsDialog dialog, System.Threading.Tasks.TaskCompletionSource<bool?> tcs)
+        private static void SetupOverlayClickHandler(TaskCompletionSource<bool?> tcs)
         {
-            System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
-            {
-                var cancelButton = FindButtonByContent(dialog, "Cancel");
-
-                if (cancelButton != null)
-                {
-                    cancelButton.Click += (s, e) => tcs.TrySetResult(false);
-                    System.Diagnostics.Debug.WriteLine("Settings Cancel button handler attached");
-                }
-            }), System.Windows.Threading.DispatcherPriority.Loaded);
+            var overlayHandler = new MouseButtonEventHandler((s, e) => {
+                if (e.OriginalSource == _overlay)
+                    tcs.TrySetResult(false);
+            });
+            
+            _overlay.MouseLeftButtonDown += overlayHandler;
+            
+            // Remove handler when task completes
+            tcs.Task.ContinueWith(_ => _overlay.MouseLeftButtonDown -= overlayHandler);
         }
 
         private static Button FindButtonByContent(DependencyObject parent, string content)
         {
-            if (parent == null || string.IsNullOrEmpty(content)) return null;
+            if (parent == null || string.IsNullOrEmpty(content)) 
+                return null;
 
             for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
             {
                 var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
 
-                if (child is Button button)
-                {
-                    var buttonContent = button.Content?.ToString();
-                    if (buttonContent == content)
-                    {
-                        return button;
-                    }
-                }
+                if (child is Button button && button.Content?.ToString() == content)
+                    return button;
 
                 var result = FindButtonByContent(child, content);
                 if (result != null)
@@ -165,11 +152,8 @@ namespace AccountManager
     public class EmptyCommand : ICommand
     {
         public static readonly EmptyCommand Instance = new EmptyCommand();
-
         public event EventHandler CanExecuteChanged { add { } remove { } }
-
         public bool CanExecute(object parameter) => true;
-
         public void Execute(object parameter) { }
     }
 }

@@ -1,0 +1,16 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Modern Glass Effect for Dialogs -->
+    <Style x:Key="GlassPanel" TargetType="Border">
+        <Setter Property="CornerRadius" Value="24"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect Color="#4F46E5" Opacity="0.15" ShadowDepth="16" BlurRadius="32"/>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

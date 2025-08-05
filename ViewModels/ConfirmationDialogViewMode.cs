@@ -15,10 +15,12 @@ namespace AccountManager.Views.Dialogs
         private string _inputText = "";
         private string _errorMessage = "";
         private bool _result = false;
+        private string _expectedInput = "";
+        private string _actualPassword = "";
 
-        // Event to notify when dialog should close
         public event EventHandler<bool> RequestClose;
 
+        // Display Properties
         public string Title { get; set; }
         public string Subtitle { get; set; }
         public string WarningMessage { get; set; }
@@ -33,10 +35,6 @@ namespace AccountManager.Views.Dialogs
         public bool IsDestructive { get; set; }
         public bool ShowChangesSummary { get; set; }
         public List<string> ChangesList { get; set; } = new();
-
-        // For validation
-        private string _expectedInput = "";
-        private string _actualPassword = "";
 
         public string InputText
         {
@@ -92,12 +90,10 @@ namespace AccountManager.Views.Dialogs
             CancelCommand = new RelayCommand(_ => Cancel());
         }
 
-        #region Setup Methods
-
         public void SetupGroupDeleteConfirmation(AccountGroup group)
         {
             Title = "Delete Group";
-            Subtitle = $"This action cannot be undone";
+            Subtitle = "This action cannot be undone";
             WarningMessage = group.Accounts.Count > 0 
                 ? $"Group '{group.Name}' contains {group.Accounts.Count} account(s). All accounts will be permanently deleted."
                 : $"Are you sure you want to delete the group '{group.Name}'?";
@@ -107,10 +103,9 @@ namespace AccountManager.Views.Dialogs
             _expectedInput = group.Name;
             
             RequiresInput = true;
-            IsPasswordInput = false;
             IsDestructive = true;
             IconKind = PackIconKind.FolderRemove;
-            IconBackgroundColor = new SolidColorBrush(Color.FromRgb(239, 68, 68)); // DangerColor
+            IconBackgroundColor = new SolidColorBrush(Color.FromRgb(239, 68, 68));
             ConfirmButtonText = "Delete Group";
         }
 
@@ -128,7 +123,7 @@ namespace AccountManager.Views.Dialogs
             IsPasswordInput = true;
             IsDestructive = true;
             IconKind = PackIconKind.AccountRemove;
-            IconBackgroundColor = new SolidColorBrush(Color.FromRgb(239, 68, 68)); // DangerColor
+            IconBackgroundColor = new SolidColorBrush(Color.FromRgb(239, 68, 68));
             ConfirmButtonText = "Delete Account";
         }
 
@@ -136,60 +131,31 @@ namespace AccountManager.Views.Dialogs
         {
             Title = "Confirm Changes";
             Subtitle = "Save changes to account";
-            WarningMessage = "";
-            
             ChangesList = changes;
             ShowChangesSummary = true;
-            
-            RequiresInput = false;
             IsDestructive = false;
             IconKind = PackIconKind.ContentSave;
-            IconBackgroundColor = new SolidColorBrush(Color.FromRgb(99, 102, 241)); // PrimaryColor
+            IconBackgroundColor = new SolidColorBrush(Color.FromRgb(99, 102, 241));
             ConfirmButtonText = "Save Changes";
         }
 
-        #endregion
-
         private void ValidateInput()
         {
-            if (!RequiresInput)
+            if (!RequiresInput || string.IsNullOrWhiteSpace(InputText))
             {
                 ErrorMessage = "";
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(InputText))
-            {
-                ErrorMessage = "";
-                return;
-            }
-
-            // Group name validation
             if (!string.IsNullOrEmpty(_expectedInput))
             {
-                if (InputText.Trim() != _expectedInput)
-                {
-                    ErrorMessage = "Group name not valid";
-                }
-                else
-                {
-                    ErrorMessage = "";
-                }
+                ErrorMessage = InputText.Trim() != _expectedInput ? "Group name not valid" : "";
             }
-            // Password validation
             else if (!string.IsNullOrEmpty(_actualPassword))
             {
-                if (InputText != _actualPassword)
-                {
-                    ErrorMessage = "Password is incorrect";
-                }
-                else
-                {
-                    ErrorMessage = "";
-                }
+                ErrorMessage = InputText != _actualPassword ? "Password is incorrect" : "";
             }
             
-            // Force command to re-evaluate CanExecute
             CommandManager.InvalidateRequerySuggested();
         }
 

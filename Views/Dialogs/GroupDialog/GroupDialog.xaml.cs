@@ -3,10 +3,6 @@ using System.Windows.Controls;
 
 namespace AccountManager.Views.Dialogs
 {
-    /// <summary>
-    /// Unified dialog for creating and editing groups
-    /// Handles both create and edit modes through the GroupDialogViewModel
-    /// </summary>
     public partial class GroupDialog : UserControl
     {
         public GroupDialog()
@@ -14,14 +10,8 @@ namespace AccountManager.Views.Dialogs
             InitializeComponent();
         }
 
-        /// <summary>
-        /// Get the view model for this dialog
-        /// </summary>
         public GroupDialogViewModel ViewModel => DataContext as GroupDialogViewModel;
 
-        /// <summary>
-        /// Setup the dialog for create mode
-        /// </summary>
         public void SetupForCreate()
         {
             var viewModel = new GroupDialogViewModel();
@@ -29,9 +19,6 @@ namespace AccountManager.Views.Dialogs
             DataContext = viewModel;
         }
 
-        /// <summary>
-        /// Setup the dialog for edit mode
-        /// </summary>
         public void SetupForEdit(Models.AccountGroup group)
         {
             var viewModel = new GroupDialogViewModel();
