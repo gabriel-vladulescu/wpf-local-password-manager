@@ -5,7 +5,7 @@
              Background="Transparent">
 
     <Border Style="{StaticResource GlassPanel}" 
-            MinWidth="450" MaxWidth="450" MaxHeight="500"
+            MinWidth="500" MaxWidth="500" MaxHeight="600"
             Background="{DynamicResource CardBackgroundColor}">
         <Grid Margin="24">
             <Grid.RowDefinitions>
@@ -123,6 +123,107 @@
                                     IsChecked="{Binding EnableEncryption}"/>
                     </Grid>
 
+                    <!-- Data Management Section -->
+                    <TextBlock Text="Data Management" 
+                             FontSize="16" 
+                             FontWeight="Bold"
+                             Foreground="{DynamicResource TextPrimaryColor}"
+                             Margin="0,20,0,12"/>
+                    
+                    <!-- Enable Trash Toggle -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Enable Trash" 
+                                     FontWeight="SemiBold"
+                                     Foreground="{DynamicResource TextPrimaryColor}"
+                                     FontSize="14"/>
+                            <TextBlock Text="Move deleted accounts to trash instead of permanent deletion" 
+                                     Foreground="{DynamicResource TextSecondaryColor}"
+                                     FontSize="12"
+                                     Margin="0,2,0,0"/>
+                        </StackPanel>
+                        
+                        <ToggleButton Grid.Column="1" 
+                                    Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                                    IsChecked="{Binding EnableTrash}"/>
+                    </Grid>
+                    
+                    <!-- Enable Archive Toggle -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Enable Archive" 
+                                     FontWeight="SemiBold"
+                                     Foreground="{DynamicResource TextPrimaryColor}"
+                                     FontSize="14"/>
+                            <TextBlock Text="Archive accounts to hide them from main view" 
+                                     Foreground="{DynamicResource TextSecondaryColor}"
+                                     FontSize="12"
+                                     Margin="0,2,0,0"/>
+                        </StackPanel>
+                        
+                        <ToggleButton Grid.Column="1" 
+                                    Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                                    IsChecked="{Binding EnableArchive}"/>
+                    </Grid>
+                    
+                    <!-- Auto Empty Trash Toggle (only visible if trash is enabled) -->
+                    <Grid Margin="0,0,0,16" Visibility="{Binding EnableTrash, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Auto Empty Trash" 
+                                     FontWeight="SemiBold"
+                                     Foreground="{DynamicResource TextPrimaryColor}"
+                                     FontSize="14"/>
+                            <TextBlock Text="{Binding TrashRetentionDays, StringFormat=Automatically delete items after {0} days}" 
+                                     Foreground="{DynamicResource TextSecondaryColor}"
+                                     FontSize="12"
+                                     Margin="0,2,0,0"/>
+                        </StackPanel>
+                        
+                        <ToggleButton Grid.Column="1" 
+                                    Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                                    IsChecked="{Binding AutoEmptyTrash}"/>
+                    </Grid>
+                    
+                    <!-- Trash Retention Days (only visible if auto empty is enabled) -->
+                    <Grid Margin="0,0,0,16" Visibility="{Binding ShowTrashRetention, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="100"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="Retention Period" 
+                                     FontWeight="SemiBold"
+                                     Foreground="{DynamicResource TextPrimaryColor}"
+                                     FontSize="14"/>
+                            <TextBlock Text="Days to keep items in trash" 
+                                     Foreground="{DynamicResource TextSecondaryColor}"
+                                     FontSize="12"
+                                     Margin="0,2,0,0"/>
+                        </StackPanel>
+                        
+                        <TextBox Grid.Column="1"
+                               Text="{Binding TrashRetentionDays}"
+                               Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                               materialDesign:HintAssist.Hint="Days"
+                               VerticalAlignment="Center"/>
+                    </Grid>
+
                     <!-- UI Section -->
                     <TextBlock Text="User Interface" 
                              FontSize="16" 
@@ -131,7 +232,7 @@
                              Margin="0,20,0,12"/>
                     
                     <!-- Enable Local Search Toggle -->
-                    <Grid>
+                    <Grid Margin="0,0,0,16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
@@ -153,6 +254,59 @@
                                     IsChecked="{Binding EnableLocalSearch}"/>
                     </Grid>
                     
+                    <!-- Confirmation Section -->
+                    <TextBlock Text="Confirmations" 
+                             FontSize="16" 
+                             FontWeight="Bold"
+                             Foreground="{DynamicResource TextPrimaryColor}"
+                             Margin="0,20,0,12"/>
+                    
+                    <!-- Confirm Account Delete Toggle -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Confirm Account Deletion" 
+                                     FontWeight="SemiBold"
+                                     Foreground="{DynamicResource TextPrimaryColor}"
+                                     FontSize="14"/>
+                            <TextBlock Text="Show confirmation dialog when deleting accounts" 
+                                     Foreground="{DynamicResource TextSecondaryColor}"
+                                     FontSize="12"
+                                     Margin="0,2,0,0"/>
+                        </StackPanel>
+                        
+                        <ToggleButton Grid.Column="1" 
+                                    Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                                    IsChecked="{Binding ConfirmAccountDelete}"/>
+                    </Grid>
+                    
+                    <!-- Confirm Group Delete Toggle -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Confirm Group Deletion" 
+                                     FontWeight="SemiBold"
+                                     Foreground="{DynamicResource TextPrimaryColor}"
+                                     FontSize="14"/>
+                            <TextBlock Text="Show confirmation dialog when deleting groups" 
+                                     Foreground="{DynamicResource TextSecondaryColor}"
+                                     FontSize="12"
+                                     Margin="0,2,0,0"/>
+                        </StackPanel>
+                        
+                        <ToggleButton Grid.Column="1" 
+                                    Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                                    IsChecked="{Binding ConfirmGroupDelete}"/>
+                    </Grid>
+                    
                 </StackPanel>
             </ScrollViewer>
 
@@ -161,9 +315,13 @@
                     Orientation="Horizontal" 
                     HorizontalAlignment="Center"
                     Margin="0,20,0,0">
-                <Button Content="Cancel" 
+                <Button Content="Reset to Defaults" 
                       Style="{StaticResource SecondaryButton}"
+                      Command="{Binding ResetToDefaultsCommand}"
                       Margin="0,0,16,0"/>
+                <Button Content="Close" 
+                      Style="{StaticResource PrimaryButton}"
+                      Command="{Binding CloseCommand}"/>
             </StackPanel>
         </Grid>
     </Border>

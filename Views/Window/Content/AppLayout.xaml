@@ -16,7 +16,6 @@
         <!-- Main Application Layout -->
         <Grid x:Name="MainContent">
             <Grid.RowDefinitions>
-                <RowDefinition Height="40"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
@@ -24,28 +23,31 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Custom Title Bar -->
-            <Border Grid.Row="0" Grid.ColumnSpan="2" 
-                    Background="{DynamicResource CardBackgroundColor}">
-                <Grid>
-                    <titleBarViews:WindowChrome />
-                    <titleBarViews:WindowControls />
-                </Grid>
-            </Border>
+
             
             <!-- Left Sidebar -->
-            <navigationViews:Sidebar Grid.Row="1" Grid.Column="0" />
+            <navigationViews:Sidebar x:Name="SidebarControl" Grid.Row="1" Grid.Column="0" />
 
             <!-- Main Content Area -->
             <Grid Grid.Row="1" Grid.Column="1">
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="60"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
+                <!-- Custom Title Bar -->
+                <Border Grid.Row="0" Grid.ColumnSpan="2" 
+                    Background="{DynamicResource AppBarBackgroundColor}">
+                    <Grid>
+                        <titleBarViews:WindowChrome />
+                        <titleBarViews:WindowControls />
+                    </Grid>
+                </Border>
+                
                 <!-- Content Header with Search and Controls -->
-                <Grid Grid.Row="0" Background="Transparent" Height="60">
+                <Grid Grid.Row="1" Background="Transparent" Height="60">
                     <Grid Margin="12,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>

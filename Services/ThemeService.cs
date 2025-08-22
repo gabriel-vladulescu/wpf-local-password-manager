@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Windows;
 using MaterialDesignThemes.Wpf;
+using AccountManager.Config;
 
 namespace AccountManager.Services
 {
@@ -88,37 +89,37 @@ namespace AccountManager.Services
         private void ApplyDarkTheme(Theme theme)
         {
             // Primary colors
-            theme.SetPrimaryColor(System.Windows.Media.Color.FromRgb(99, 102, 241)); // #6366F1
-            theme.SetSecondaryColor(System.Windows.Media.Color.FromRgb(139, 92, 246)); // #8B5CF6
+            theme.SetPrimaryColor(ColorConstants.FromHex(ColorConstants.Common.Primary));
+            theme.SetSecondaryColor(ColorConstants.FromHex(ColorConstants.Common.Accent));
             
             // Dark theme specific colors
-            theme.Paper = System.Windows.Media.Color.FromRgb(15, 23, 42);        // #0F172A
-            theme.CardBackground = System.Windows.Media.Color.FromRgb(30, 41, 59); // #1E293B
-            theme.ToolBarBackground = System.Windows.Media.Color.FromRgb(30, 41, 59);
-            theme.Body = System.Windows.Media.Color.FromRgb(241, 245, 249);       // #F1F5F9
-            theme.BodyLight = System.Windows.Media.Color.FromRgb(148, 163, 184);  // #94A3B8
-            theme.ColumnHeader = System.Windows.Media.Color.FromRgb(71, 85, 105); // #475569
-            theme.CheckBoxOff = System.Windows.Media.Color.FromRgb(100, 116, 139); // #64748B
-            theme.Divider = System.Windows.Media.Color.FromRgb(51, 65, 85);       // #334155
-            theme.Selection = System.Windows.Media.Color.FromRgb(99, 102, 241);   // #6366F1 with opacity
+            theme.Paper = ColorConstants.FromHex(ColorConstants.Dark.Background);
+            theme.CardBackground = ColorConstants.FromHex(ColorConstants.Dark.Surface);
+            theme.ToolBarBackground = ColorConstants.FromHex(ColorConstants.Dark.Surface);
+            theme.Body = ColorConstants.FromHex(ColorConstants.Dark.TextPrimary);
+            theme.BodyLight = ColorConstants.FromHex(ColorConstants.Dark.TextSecondary);
+            theme.ColumnHeader = ColorConstants.FromHex(ColorConstants.Dark.InputBorder);
+            theme.CheckBoxOff = ColorConstants.FromHex(ColorConstants.Dark.TextSecondary);
+            theme.Divider = ColorConstants.FromHex(ColorConstants.Dark.Border);
+            theme.Selection = ColorConstants.FromHex(ColorConstants.Common.Primary);
         }
 
         private void ApplyLightTheme(Theme theme)
         {
             // Primary colors
-            theme.SetPrimaryColor(System.Windows.Media.Color.FromRgb(99, 102, 241)); // #6366F1
-            theme.SetSecondaryColor(System.Windows.Media.Color.FromRgb(139, 92, 246)); // #8B5CF6
+            theme.SetPrimaryColor(ColorConstants.FromHex(ColorConstants.Common.Primary));
+            theme.SetSecondaryColor(ColorConstants.FromHex(ColorConstants.Common.Accent));
             
             // Light theme specific colors
-            theme.Paper = System.Windows.Media.Color.FromRgb(255, 255, 255);      // #FFFFFF
-            theme.CardBackground = System.Windows.Media.Color.FromRgb(255, 255, 255);
-            theme.ToolBarBackground = System.Windows.Media.Color.FromRgb(248, 250, 252);
-            theme.Body = System.Windows.Media.Color.FromRgb(30, 41, 59);          // #1E293B
-            theme.BodyLight = System.Windows.Media.Color.FromRgb(100, 116, 139);  // #64748B
-            theme.ColumnHeader = System.Windows.Media.Color.FromRgb(148, 163, 184); // #94A3B8
-            theme.CheckBoxOff = System.Windows.Media.Color.FromRgb(203, 213, 225); // #CBD5E1
-            theme.Divider = System.Windows.Media.Color.FromRgb(226, 232, 240);    // #E2E8F0
-            theme.Selection = System.Windows.Media.Color.FromRgb(99, 102, 241);   // #6366F1
+            theme.Paper = ColorConstants.FromHex(ColorConstants.Light.Surface);
+            theme.CardBackground = ColorConstants.FromHex(ColorConstants.Light.Surface);
+            theme.ToolBarBackground = ColorConstants.FromHex(ColorConstants.Light.Background);
+            theme.Body = ColorConstants.FromHex(ColorConstants.Light.TextPrimary);
+            theme.BodyLight = ColorConstants.FromHex(ColorConstants.Light.TextSecondary);
+            theme.ColumnHeader = ColorConstants.FromHex(ColorConstants.Light.TextSecondary);
+            theme.CheckBoxOff = ColorConstants.FromHex(ColorConstants.Light.Border);
+            theme.Divider = ColorConstants.FromHex(ColorConstants.Light.Border);
+            theme.Selection = ColorConstants.FromHex(ColorConstants.Common.Primary);
         }
 
         private void UpdateApplicationResources()
@@ -130,83 +131,69 @@ namespace AccountManager.Services
             if (CurrentTheme == AppTheme.Dark)
             {
                 // Dark theme resources
-                app.Resources["SidebarColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(30, 41, 59)); // #1E293B - Dark sidebar
-                app.Resources["MainBackgroundColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(15, 23, 42)); // #0F172A - Dark background
-                app.Resources["CardBackgroundColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(30, 41, 59)); // #1E293B
-                app.Resources["CardBorderColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(51, 65, 85)); // #334155
-                app.Resources["CardBorderHoverColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(99, 102, 241)); // #6366F1
-                app.Resources["TextPrimaryColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(241, 245, 249)); // #F1F5F9
-                app.Resources["TextSecondaryColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(148, 163, 184)); // #94A3B8
-                app.Resources["BorderColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(51, 65, 85)); // #334155
-                app.Resources["InputBackgroundColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(51, 65, 85)); // #334155
-                app.Resources["SearchBackgroundColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(51, 65, 85)); // #334155
-                app.Resources["EmptyStateBackgroundColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(51, 65, 85)); // #334155
+                app.Resources["SidebarColor"] = ColorConstants.ToBrush(ColorConstants.Dark.SidebarBackground);
+                app.Resources["AppBarBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Dark.AppBarBackgroundColor);
+
+                app.Resources["MainBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Dark.Background);
+                app.Resources["CardBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Dark.Surface);
+                app.Resources["CardBorderColor"] = ColorConstants.ToBrush(ColorConstants.Dark.Border);
+                app.Resources["CardBorderHoverColor"] = ColorConstants.ToBrush(ColorConstants.Dark.CardBorderHover);
+                app.Resources["TextPrimaryColor"] = ColorConstants.ToBrush(ColorConstants.Dark.TextPrimary);
+                app.Resources["TextSecondaryColor"] = ColorConstants.ToBrush(ColorConstants.Dark.TextSecondary);
+                app.Resources["BorderColor"] = ColorConstants.ToBrush(ColorConstants.Dark.Border);
+                app.Resources["InputBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Dark.InputBackground);
+                app.Resources["InputLabelBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Dark.InputLabelBackground);
+                app.Resources["InputLabelTextColor"] = ColorConstants.ToBrush(ColorConstants.Dark.InputLabelText);
+                app.Resources["SearchBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Dark.SearchBackground);
+                app.Resources["EmptyStateBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Dark.EmptyStateBackground);
                 
-                // Sidebar text colors for dark theme (WHITE TEXT)
-                app.Resources["SidebarTextPrimaryColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(255, 255, 255)); // White
-                app.Resources["SidebarTextSecondaryColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(148, 163, 184)); // #94A3B8
+                // Sidebar text colors for dark theme
+                app.Resources["SidebarTextPrimaryColor"] = ColorConstants.ToBrush(ColorConstants.Dark.SidebarTextPrimary);
+                app.Resources["SidebarTextSecondaryColor"] = ColorConstants.ToBrush(ColorConstants.Dark.SidebarTextSecondary);
+
+                // Custom input brushes for dark theme
+                app.Resources["InputBackgroundBrush"] = ColorConstants.ToBrush(ColorConstants.Dark.InputBackground);
+                app.Resources["InputBorderBrush"] = ColorConstants.ToBrush(ColorConstants.Dark.InputBorder);
+                app.Resources["InputTextBrush"] = ColorConstants.ToBrush(ColorConstants.Dark.InputText);
+                app.Resources["InputFocusBrush"] = ColorConstants.ToBrush(ColorConstants.Common.Primary);
             }
             else
             {
                 // Light theme resources
-                app.Resources["SidebarColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(255, 255, 255)); // #FFFFFF - White sidebar
-                app.Resources["MainBackgroundColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(241, 245, 249)); // #F1F5F9 - Light gray background
-                app.Resources["CardBackgroundColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(255, 255, 255)); // #FFFFFF
-                app.Resources["CardBorderColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(226, 232, 240)); // #E2E8F0
-                app.Resources["CardBorderHoverColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(99, 102, 241)); // #6366F1
-                app.Resources["TextPrimaryColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(30, 41, 59)); // #1E293B
-                app.Resources["TextSecondaryColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(100, 116, 139)); // #64748B
-                app.Resources["BorderColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(226, 232, 240)); // #E2E8F0
-                app.Resources["InputBackgroundColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(248, 250, 252)); // #F8FAFC
-                app.Resources["SearchBackgroundColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(248, 250, 252)); // #F8FAFC
-                app.Resources["EmptyStateBackgroundColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(248, 250, 252)); // #F8FAFC
+                app.Resources["SidebarColor"] = ColorConstants.ToBrush(ColorConstants.Light.SidebarBackground);
+                app.Resources["AppBarBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Light.AppBarBackgroundColor);
+
+
+                app.Resources["MainBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Light.Background);
+                app.Resources["CardBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Light.Surface);
+                app.Resources["CardBorderColor"] = ColorConstants.ToBrush(ColorConstants.Light.Border);
+                app.Resources["CardBorderHoverColor"] = ColorConstants.ToBrush(ColorConstants.Light.CardBorderHover);
+                app.Resources["TextPrimaryColor"] = ColorConstants.ToBrush(ColorConstants.Light.TextPrimary);
+                app.Resources["TextSecondaryColor"] = ColorConstants.ToBrush(ColorConstants.Light.TextSecondary);
+                app.Resources["BorderColor"] = ColorConstants.ToBrush(ColorConstants.Light.Border);
+                app.Resources["InputBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Light.InputBackground);
+                app.Resources["InputLabelBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Light.InputLabelBackground);
+                app.Resources["InputLabelTextColor"] = ColorConstants.ToBrush(ColorConstants.Light.InputLabelText);
+                app.Resources["SearchBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Light.SearchBackground);
+                app.Resources["EmptyStateBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Light.EmptyStateBackground);
                 
-                // Sidebar text colors for light theme (DARK TEXT)
-                app.Resources["SidebarTextPrimaryColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(30, 41, 59)); // #1E293B - Dark text
-                app.Resources["SidebarTextSecondaryColor"] = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(100, 116, 139)); // #64748B - Gray text
+                // Sidebar text colors for light theme
+                app.Resources["SidebarTextPrimaryColor"] = ColorConstants.ToBrush(ColorConstants.Light.SidebarTextPrimary);
+                app.Resources["SidebarTextSecondaryColor"] = ColorConstants.ToBrush(ColorConstants.Light.SidebarTextSecondary);
+
+                // Custom input brushes for light theme
+                app.Resources["InputBackgroundBrush"] = ColorConstants.ToBrush(ColorConstants.Light.InputBackground);
+                app.Resources["InputBorderBrush"] = ColorConstants.ToBrush(ColorConstants.Light.InputBorder);
+                app.Resources["InputTextBrush"] = ColorConstants.ToBrush(ColorConstants.Light.InputText);
+                app.Resources["InputFocusBrush"] = ColorConstants.ToBrush(ColorConstants.Common.Primary);
             }
 
-            // Force UI refresh
-            Console.WriteLine($"Theme switched to: {CurrentTheme}");
-            Console.WriteLine($"Sidebar color set to: {(CurrentTheme == AppTheme.Dark ? "#1E293B (dark)" : "#FFFFFF (white)")}");
-            
             // Common colors that don't change
-            app.Resources["PrimaryColor"] = new System.Windows.Media.SolidColorBrush(
-                System.Windows.Media.Color.FromRgb(99, 102, 241)); // #6366F1
-            app.Resources["AccentColor"] = new System.Windows.Media.SolidColorBrush(
-                System.Windows.Media.Color.FromRgb(139, 92, 246)); // #8B5CF6
-            app.Resources["SuccessColor"] = new System.Windows.Media.SolidColorBrush(
-                System.Windows.Media.Color.FromRgb(16, 185, 129)); // #10B981
-            app.Resources["DangerColor"] = new System.Windows.Media.SolidColorBrush(
-                System.Windows.Media.Color.FromRgb(239, 68, 68)); // #EF4444
-            app.Resources["WarningColor"] = new System.Windows.Media.SolidColorBrush(
-                System.Windows.Media.Color.FromRgb(245, 158, 11)); // #F59E0B
+            app.Resources["PrimaryColor"] = ColorConstants.ToBrush(ColorConstants.Common.Primary);
+            app.Resources["AccentColor"] = ColorConstants.ToBrush(ColorConstants.Common.Accent);
+            app.Resources["SuccessColor"] = ColorConstants.ToBrush(ColorConstants.Common.Success);
+            app.Resources["DangerColor"] = ColorConstants.ToBrush(ColorConstants.Common.Danger);
+            app.Resources["WarningColor"] = ColorConstants.ToBrush(ColorConstants.Common.Warning);
         }
 
         private void LoadThemeFromSettings()

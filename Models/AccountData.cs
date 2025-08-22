@@ -20,13 +20,22 @@ namespace AccountManager.Models
         public int TotalAccounts => Groups?.Sum(g => g.AccountCount) ?? 0;
 
         [JsonIgnore]
+        public int TotalFavorites => Groups?.Sum(g => g.FavoriteCount) ?? 0;
+
+        [JsonIgnore]
         public bool HasData => TotalGroups > 0;
 
         [JsonIgnore]
         public bool IsEmpty => !HasData;
 
         [JsonIgnore]
+        public bool HasFavorites => TotalFavorites > 0;
+
+        [JsonIgnore]
         public AccountGroup LargestGroup => Groups?.OrderByDescending(g => g.AccountCount).FirstOrDefault();
+
+        [JsonIgnore]
+        public AccountGroup GroupWithMostFavorites => Groups?.OrderByDescending(g => g.FavoriteCount).FirstOrDefault();
 
         [JsonIgnore]
         public Account MostRecentAccount => Groups?
@@ -35,12 +44,40 @@ namespace AccountManager.Models
             .FirstOrDefault();
 
         [JsonIgnore]
+        public Account MostRecentFavorite => Groups?
+            .SelectMany(g => g.Accounts)
+            .Where(a => a.IsFavorite)
+            .OrderByDescending(a => a.LastModified)
+            .FirstOrDefault();
+
+        [JsonIgnore]
         public string StatsText => $"{TotalGroups} groups, {TotalAccounts} accounts";
+
+        [JsonIgnore]
+        public string DetailedStatsText
+        {
+            get
+            {
+                if (TotalFavorites == 0)
+                    return StatsText;
+                return $"{StatsText}, {TotalFavorites} favorites";
+            }
+        }
 
         [JsonIgnore]
         public string LastBackupFormatted => LastBackup == DateTime.MinValue 
             ? "Never" 
             : LastBackup.ToString("MMM dd, yyyy 'at' HH:mm");
+
+        [JsonIgnore]
+        public List<Account> AllAccounts => Groups?.SelectMany(g => g.Accounts).ToList() ?? new List<Account>();
+
+        [JsonIgnore]
+        public List<Account> AllFavorites => Groups?
+            .SelectMany(g => g.Accounts)
+            .Where(a => a.IsFavorite)
+            .OrderBy(a => a.Name)
+            .ToList() ?? new List<Account>();
 
         public AccountData()
         {
@@ -92,6 +129,33 @@ namespace AccountManager.Models
                 .ToList();
         }
 
+        public List<Account> SearchFavorites(string searchTerm)
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+                return AllFavorites;
+
+            var search = searchTerm.ToLower();
+            return AllFavorites
+                .Where(a => 
+                    (a.Name?.ToLower().Contains(search) ?? false) ||
+                    (a.Username?.ToLower().Contains(search) ?? false) ||
+                    (a.Email?.ToLower().Contains(search) ?? false) ||
+                    (a.Website?.ToLower().Contains(search) ?? false))
+                .OrderBy(a => a.Name)
+                .ToList();
+        }
+
+        public Account FindAccountByName(string accountName)
+        {
+            return AllAccounts.FirstOrDefault(a => 
+                string.Equals(a.Name, accountName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public AccountGroup FindGroupContaining(Account account)
+        {
+            return Groups?.FirstOrDefault(g => g.Accounts.Contains(account));
+        }
+
         public void UpdateBackupTime()
         {
             LastBackup = DateTime.Now;
@@ -139,6 +203,24 @@ namespace AccountManager.Models
                     group.Accounts.Remove(account);
                 }
             }
+        }
+
+        public Dictionary<string, object> GetAnalytics()
+        {
+            return new Dictionary<string, object>
+            {
+                ["totalGroups"] = TotalGroups,
+                ["totalAccounts"] = TotalAccounts,
+                ["totalFavorites"] = TotalFavorites,
+                ["favoritePercentage"] = TotalAccounts > 0 ? Math.Round((double)TotalFavorites / TotalAccounts * 100, 1) : 0,
+                ["averageAccountsPerGroup"] = TotalGroups > 0 ? Math.Round((double)TotalAccounts / TotalGroups, 1) : 0,
+                ["largestGroupName"] = LargestGroup?.Name ?? "None",
+                ["largestGroupSize"] = LargestGroup?.AccountCount ?? 0,
+                ["groupWithMostFavoritesName"] = GroupWithMostFavorites?.Name ?? "None",
+                ["groupWithMostFavoritesCount"] = GroupWithMostFavorites?.FavoriteCount ?? 0,
+                ["lastActivity"] = MostRecentAccount?.LastModifiedFormatted ?? "Never",
+                ["lastFavoriteActivity"] = MostRecentFavorite?.LastModifiedFormatted ?? "Never"
+            };
         }
     }
 }

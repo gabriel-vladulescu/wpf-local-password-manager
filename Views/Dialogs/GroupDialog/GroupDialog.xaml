@@ -2,109 +2,120 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:helpers="clr-namespace:AccountManager.Utilities.Helpers"
+             xmlns:components="clr-namespace:AccountManager.Views.Components"
              Background="Transparent">
 
     <Border Style="{StaticResource GlassPanel}" 
-            MinWidth="400" MaxWidth="400" MaxHeight="400"
+            MinWidth="490" MaxWidth="490" MaxHeight="800"
             Background="{DynamicResource CardBackgroundColor}">
-        <Grid Margin="24">
+        <Grid Margin="32">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <!-- Header -->
-            <StackPanel Grid.Row="0" Margin="0,0,0,20">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <Border Background="#6366F1" 
-                        Width="48" Height="48" 
-                        CornerRadius="24">
-                        <materialDesign:PackIcon Kind="{Binding IconKind}" 
-                                            Foreground="White"
-                                            Width="24" Height="24"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"/>
-                    </Border>
-                </StackPanel>
-                
+            <StackPanel Grid.Row="0" Margin="0,0,0,24">
                 <TextBlock Text="{Binding Title}" 
-                        FontSize="20" 
+                        FontSize="24" 
                         FontWeight="Bold"
                         Foreground="{DynamicResource TextPrimaryColor}"
-                        HorizontalAlignment="Center"
-                        Margin="0,12,0,0"/>
+                        HorizontalAlignment="Left"
+                        Margin="0,0,0,8"/>
                 
                 <TextBlock Text="{Binding Subtitle}" 
                         FontSize="14"
                         Foreground="{DynamicResource TextSecondaryColor}"
-                        HorizontalAlignment="Center"
-                        Margin="0,6,0,0"/>
+                        HorizontalAlignment="Left"
+                        Margin="0,0,0,0"/>
             </StackPanel>
 
-            <!-- Form -->
-            <StackPanel Grid.Row="1" Margin="0,20,10,0">
-                <TextBlock Text="Group Name *" 
-                         Foreground="{DynamicResource TextPrimaryColor}" 
-                         FontWeight="SemiBold"
-                         FontSize="13"
-                         Margin="0,0,0,8"/>
-                <TextBox x:Name="GroupNameTextBox"
-                       Text="{Binding GroupName, UpdateSourceTrigger=PropertyChanged}"
-                       MaxLength="40"
-                       Background="{DynamicResource InputBackgroundColor}"
-                       Foreground="{DynamicResource TextPrimaryColor}"
-                       BorderBrush="{DynamicResource BorderColor}"
-                       BorderThickness="1"
-                       Padding="12,8"
-                       FontSize="13"
-                       Height="36">
-                    <TextBox.Template>
-                        <ControlTemplate TargetType="TextBox">
-                            <Border Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    CornerRadius="6">
-                                <ScrollViewer x:Name="PART_ContentHost"
-                                            Margin="{TemplateBinding Padding}"
-                                            VerticalAlignment="Center"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsFocused" Value="True">
-                                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryColor}"/>
-                                    <Setter Property="BorderThickness" Value="2"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </TextBox.Template>
-                </TextBox>
-                
-                <!-- Character count indicator -->
-                <TextBlock HorizontalAlignment="Right" 
-                         Margin="0,4,0,0"
-                         FontSize="11"
-                         Foreground="{DynamicResource TextSecondaryColor}">
-                    <TextBlock.Text>
-                        <MultiBinding StringFormat="{}{0}/40 characters">
-                            <Binding Path="GroupName.Length" FallbackValue="0"/>
-                        </MultiBinding>
-                    </TextBlock.Text>
-                </TextBlock>
+            <!-- Group Name with Preview -->
+            <StackPanel Grid.Row="1" Margin="0,0,0,32">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Icon Preview -->
+                    <Border Grid.Column="0" 
+                            Background="{Binding TempGroup.ColorVariant, Converter={StaticResource OpacityBrushConverter}, ConverterParameter=0.2}"
+                            Width="46" Height="46"
+                            CornerRadius="23"
+                            Margin="0,0,12,0"
+                            VerticalAlignment="Top">
+                        <materialDesign:PackIcon Kind="{Binding TempGroup.Icon}" 
+                            Foreground="{Binding TempGroup.ColorVariant}"
+                            Width="23" Height="23"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"/>
+                    </Border>
+
+                    <!-- Name Input -->
+                    <TextBox Grid.Column="1" 
+                            Text="{Binding GroupName, UpdateSourceTrigger=PropertyChanged}"
+                            Style="{StaticResource AdvancedTextBox}"
+                            helpers:TextBoxHelper.Label="Name"
+                            helpers:TextBoxHelper.MaxChars="40"
+                            helpers:TextBoxHelper.Placeholder="Enter your vault name here..." 
+                            helpers:TextBoxHelper.Info="Only numbers and letters are allowed."/>
+                </Grid>
+            </StackPanel>
+
+            <!-- Color Selection Section -->
+            <StackPanel Grid.Row="2" Margin="0,0,0,36">
+                <TextBlock Text="Choose Color" 
+                          FontSize="16" 
+                          FontWeight="SemiBold"
+                          Foreground="{DynamicResource TextPrimaryColor}"
+                          Margin="0,0,0,20"/>
+                          
+                <!-- Color Picker Component -->
+                <components:ColorPicker 
+                SelectedColor="{Binding DataContext.TempGroup.ColorVariant, 
+                        RelativeSource={RelativeSource AncestorType=UserControl}, 
+                        Mode=TwoWay}" />
+            </StackPanel>
+
+            <!-- Icon Selection Section -->
+            <StackPanel Grid.Row="3" Margin="0,0,0,32">
+                <TextBlock Text="Choose Icon" 
+                          FontSize="16" 
+                          FontWeight="SemiBold"
+                          Foreground="{DynamicResource TextPrimaryColor}"
+                          Margin="0,0,0,20"/>
+                          
+                <!-- Icon Picker Component -->
+                <components:IconPicker 
+                SelectedIcon="{Binding DataContext.TempGroup.Icon, 
+                        RelativeSource={RelativeSource AncestorType=UserControl}, 
+                        Mode=TwoWay}" />
             </StackPanel>
 
             <!-- Actions -->
-            <StackPanel Grid.Row="2" 
+            <StackPanel Grid.Row="5" 
                     Orientation="Horizontal" 
-                    HorizontalAlignment="Center"
-                    Margin="0,20,0,0">
+                    HorizontalAlignment="Right"
+                    Margin="0,24,0,0">
                 <Button Content="Cancel" 
                       Style="{StaticResource SecondaryButton}"
-                      Margin="0,0,16,0"/>
+                      MinWidth="100"
+                      Margin="0,0,16,0"
+                      Command="{Binding CancelCommand}"/>
                 
                 <Button Content="{Binding ActionButtonText}" 
                       Style="{StaticResource PrimaryButton}"
-                      IsEnabled="{Binding CanSave}"/>
+                      MinWidth="100"
+                      IsEnabled="{Binding CanSave}"
+                      Command="{Binding SaveCommand}"/>
             </StackPanel>
         </Grid>
     </Border>
+
 </UserControl>

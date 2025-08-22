@@ -1,0 +1,129 @@
+<UserControl x:Class="AccountManager.Views.Dialogs.TrashMigrationDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             Background="Transparent">
+
+    <Border Style="{StaticResource GlassPanel}" 
+            MinWidth="500" MaxWidth="500"
+            Background="{DynamicResource CardBackgroundColor}">
+        <Grid Margin="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Border Background="#EF4444" 
+                        Width="48" Height="48" 
+                        CornerRadius="24">
+                        <materialDesign:PackIcon Kind="AlertCircle" 
+                                            Foreground="White"
+                                            Width="24" Height="24"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"/>
+                    </Border>
+                </StackPanel>
+                
+                <TextBlock Text="Disable Trash" 
+                        FontSize="20" 
+                        FontWeight="Bold"
+                        Foreground="{DynamicResource TextPrimaryColor}"
+                        HorizontalAlignment="Center"
+                        Margin="0,12,0,0"/>
+                
+                <TextBlock Text="{Binding ItemCount, StringFormat=You have {0} items in trash}" 
+                        FontSize="14"
+                        Foreground="{DynamicResource TextSecondaryColor}"
+                        HorizontalAlignment="Center"
+                        Margin="0,6,0,0"/>
+            </StackPanel>
+
+            <!-- Migration Options -->
+            <StackPanel Grid.Row="1" Margin="0,20,0,0">
+                
+                <TextBlock Text="What would you like to do with these items?" 
+                         FontSize="16" 
+                         FontWeight="SemiBold"
+                         Foreground="{DynamicResource TextPrimaryColor}"
+                         Margin="0,0,0,16"/>
+                
+                <!-- Option 1: Migrate to Group -->
+                <RadioButton x:Name="MigrateRadio"
+                           GroupName="TrashAction"
+                           IsChecked="{Binding IsMigrateSelected}"
+                           Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="Move to existing group" 
+                                 FontWeight="SemiBold"
+                                 Foreground="{DynamicResource TextPrimaryColor}"
+                                 FontSize="14"/>
+                        <TextBlock Text="Restore items by moving them to a selected group" 
+                                 Foreground="{DynamicResource TextSecondaryColor}"
+                                 FontSize="12"
+                                 Margin="0,2,0,8"/>
+                        
+                        <!-- Group Selection -->
+                        <ComboBox ItemsSource="{Binding AvailableGroups}"
+                                DisplayMemberPath="Name"
+                                SelectedItem="{Binding SelectedGroup}"
+                                Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                materialDesign:HintAssist.Hint="Select group"
+                                Width="300"
+                                HorizontalAlignment="Left"
+                                IsEnabled="{Binding IsMigrateSelected}"/>
+                    </StackPanel>
+                </RadioButton>
+                
+                <!-- Option 2: Permanently Delete -->
+                <RadioButton x:Name="DeleteRadio"
+                           GroupName="TrashAction"
+                           IsChecked="{Binding IsDeleteSelected}"
+                           Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="Permanently delete all items" 
+                                 FontWeight="SemiBold"
+                                 Foreground="{StaticResource DangerColor}"
+                                 FontSize="14"/>
+                        <TextBlock Text="This action cannot be undone" 
+                                 Foreground="{DynamicResource TextSecondaryColor}"
+                                 FontSize="12"
+                                 Margin="0,2,0,8"/>
+                        
+                        <!-- Confirmation Text Box -->
+                        <StackPanel IsEnabled="{Binding IsDeleteSelected}">
+                            <TextBlock Text="Type 'DELETE' to confirm permanent deletion:" 
+                                     Foreground="{DynamicResource TextSecondaryColor}"
+                                     FontSize="12"
+                                     Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding ConfirmationText}"
+                                   Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                   materialDesign:HintAssist.Hint="Type DELETE"
+                                   Width="300"
+                                   HorizontalAlignment="Left"/>
+                        </StackPanel>
+                    </StackPanel>
+                </RadioButton>
+                
+            </StackPanel>
+
+            <!-- Actions -->
+            <StackPanel Grid.Row="2" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Center"
+                    Margin="0,20,0,0">
+                <Button Content="Cancel" 
+                      Style="{StaticResource SecondaryButton}"
+                      Command="{Binding CancelCommand}"
+                      Margin="0,0,16,0"/>
+                <Button Content="Proceed" 
+                      Style="{StaticResource PrimaryButton}"
+                      Command="{Binding ProceedCommand}"
+                      IsEnabled="{Binding CanProceed}"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

@@ -1,7 +1,7 @@
 using System;
 using System.Windows.Input;
 
-namespace AccountManager.Commands
+namespace AccountManager.Utilities.Helpers
 {
     public class RelayCommand : ICommand
     {

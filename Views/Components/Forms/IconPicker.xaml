@@ -1,0 +1,97 @@
+<UserControl x:Class="AccountManager.Views.Components.IconPicker"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             x:Name="SourceElement">
+
+    <UserControl.Resources>
+        <Style x:Key="IconSelectionItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Width" Value="39"/>
+            <Setter Property="Height" Value="39"/>
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Grid>
+                            <!-- Outer Border (Selection Ring) -->
+                            <Border x:Name="SelectionRing"
+                                    Width="39" Height="39"
+                                    CornerRadius="18"
+                                    BorderThickness="2"
+                                    BorderBrush="Transparent"
+                                    Background="Transparent"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"/>
+                            
+                            <!-- Inner Icon Background -->
+                            <Border x:Name="IconBackground"
+                                    Width="28" Height="28"
+                                    CornerRadius="16"
+                                    Background="{DynamicResource InputBackgroundColor}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Opacity="0.7">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="Black" 
+                                                    Opacity="0.1" 
+                                                    ShadowDepth="1" 
+                                                    BlurRadius="2"/>
+                                </Border.Effect>
+                            </Border>
+
+                            <!-- Icon Content -->
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              RecognizesAccessKey="True"/>
+                        </Grid>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="SelectionRing" Property="BorderBrush" Value="{DynamicResource PrimaryColor}"/>
+                                <Setter TargetName="IconBackground" Property="Background" Value="{DynamicResource PrimaryColor}"/>
+                                <Setter TargetName="IconBackground" Property="Opacity" Value="1"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="SelectionRing" Property="BorderBrush" Value="{DynamicResource PrimaryColor}"/>
+                                <Setter TargetName="IconBackground" Property="Opacity" Value="0.9"/>
+                                <Setter TargetName="SelectionRing" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="False">
+                                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryColor}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <!-- Icon Picker Container -->
+    <StackPanel>
+        <ListBox ItemsSource="{Binding Icons, ElementName=SourceElement}"
+                 SelectedValuePath="Value"
+                 SelectedValue="{Binding SelectedIcon, ElementName=SourceElement, Mode=TwoWay}"
+                 ItemContainerStyle="{StaticResource IconSelectionItemStyle}"
+                 HorizontalAlignment="Center"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 BorderThickness="0">
+
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Columns="10" Rows="4"/>
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <materialDesign:PackIcon Kind="{Binding Kind}" Width="20" Height="20"/>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </StackPanel>
+
+</UserControl>

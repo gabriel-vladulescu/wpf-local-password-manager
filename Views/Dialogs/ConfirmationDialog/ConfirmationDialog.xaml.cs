@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Windows.Controls;
 using AccountManager.Models;
 using AccountManager.ViewModels;
@@ -8,41 +7,69 @@ namespace AccountManager.Views.Dialogs
 {
     public partial class ConfirmationDialog : UserControl
     {
-        public bool? DialogResult { get; private set; }
+        // ADD these two properties:
+        public bool? DialogResult { get; set; }
         public event EventHandler DialogClosed;
-        public ConfirmationDialogViewModel ViewModel => DataContext as ConfirmationDialogViewModel;
 
         public ConfirmationDialog()
         {
             InitializeComponent();
         }
 
+        public ConfirmationDialogViewModel ViewModel => DataContext as ConfirmationDialogViewModel;
+
+        // Your existing methods (keep these):
+        public void SetupGroupDeleteConfirmation(AccountGroup group)
+        {
+            var viewModel = new ConfirmationDialogViewModel();
+            viewModel.SetupGroupDeleteConfirmation(group);
+            DataContext = viewModel;
+        }
+
+        public void SetupAccountDeleteConfirmation(Account account)
+        {
+            var viewModel = new ConfirmationDialogViewModel();
+            viewModel.SetupAccountDeleteConfirmation(account);
+            DataContext = viewModel;
+        }
+
+        public void SetupAccountEditConfirmation(Account account)
+        {
+            var viewModel = new ConfirmationDialogViewModel();
+            viewModel.SetupAccountEditConfirmation(account);
+            DataContext = viewModel;
+        }
+
+        public void RequestClose()
+        {
+            // Implementation depends on your dialog service
+        }
+
+        // ADD these new methods (simple versions):
+        public void SetupForAccountTrash(Account account)
+        {
+            SetupAccountDeleteConfirmation(account); // Reuse existing
+        }
+
+        public void SetupForEmptyTrash(int itemCount)
+        {
+            var viewModel = new ConfirmationDialogViewModel();
+            viewModel.SetupForEmptyTrash(itemCount);
+            DataContext = viewModel;
+        }
+
         public void SetupForGroupDelete(AccountGroup group)
         {
-            SetupDialog(vm => vm.SetupGroupDeleteConfirmation(group));
+            SetupGroupDeleteConfirmation(group); // Reuse existing
         }
 
         public void SetupForAccountDelete(Account account)
         {
-            SetupDialog(vm => vm.SetupAccountDeleteConfirmation(account));
+            SetupAccountDeleteConfirmation(account); // Reuse existing
         }
 
-        public void SetupForAccountEdit(List<string> changes)
-        {
-            SetupDialog(vm => vm.SetupAccountEditConfirmation(changes));
-        }
-
-        private void SetupDialog(Action<ConfirmationDialogViewModel> setupAction)
-        {
-            var viewModel = new ConfirmationDialogViewModel();
-            setupAction(viewModel);
-            
-            viewModel.RequestClose += (sender, result) => {
-                DialogResult = result;
-                DialogClosed?.Invoke(this, EventArgs.Empty);
-            };
-            
-            DataContext = viewModel;
-        }
+        // DON'T ADD: Any WireUpCommands method
+        // DON'T ADD: Any RelayCommand code
+        // DON'T ADD: Any command override code
     }
 }

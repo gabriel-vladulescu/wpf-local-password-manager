@@ -3,17 +3,16 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
-using AccountManager.Commands;
 using AccountManager.Models;
 using AccountManager.Services;
+using AccountManager.Utilities.Helpers;
 using AccountManager.Views.Dialogs;
 
 namespace AccountManager.ViewModels
 {
-    public class MainViewModel : BaseViewModel
+    public class MainViewModel : BaseViewModel, IDisposable
     {
         private readonly JsonService _jsonService;
-        private AccountGroup _selectedGroup;
         private string _searchText = "";
         private string _globalSearchText = "";
         private ObservableCollection<Account> _filteredAccounts = new();
@@ -21,31 +20,13 @@ namespace AccountManager.ViewModels
         private string _errorMessage = "";
         private bool _hasError = false;
 
-        public ObservableCollection<AccountGroup> Groups { get; set; } = new();
-        public ThemeService ThemeService => ThemeService.Instance;
+        // Current selection state (managed by SidebarViewModel)
+        private AccountGroup _currentGroup;
+        private SystemGroup _currentSystemGroup;
 
-        public AccountGroup SelectedGroup
-        {
-            get => _selectedGroup;
-            set
-            {
-                if (SetProperty(ref _selectedGroup, value))
-                {
-                    OnPropertiesChanged(
-                        nameof(IsEmptyStateVisible),
-                        nameof(IsNoGroupsStateVisible),
-                        nameof(IsAccountsPanelVisible),
-                        nameof(IsLocalSearchVisible),
-                        nameof(BreadcrumbText),
-                        nameof(HeaderTitle),
-                        nameof(HeaderSubtitle),
-                        nameof(HeaderIcon)
-                    );
-                    UpdateFilteredAccounts();
-                    UpdateDisplayedAccounts();
-                }
-            }
-        }
+        public ObservableCollection<AccountGroup> Groups { get; set; } = new();
+        public SidebarViewModel SidebarViewModel { get; private set; }
+        public ThemeService ThemeService => ThemeService.Instance;
 
         public string SearchText
         {
@@ -95,7 +76,7 @@ namespace AccountManager.ViewModels
             set => SetProperty(ref _globalSearchResults, value);
         }
 
-        public ObservableCollection<Account> DisplayedAccounts => 
+        public ObservableCollection<Account> DisplayedAccounts =>
             IsGlobalSearchActive ? GlobalSearchResults : FilteredAccounts;
 
         public string ErrorMessage
@@ -112,10 +93,23 @@ namespace AccountManager.ViewModels
 
         // UI State Properties
         public bool IsGlobalSearchActive => !string.IsNullOrWhiteSpace(GlobalSearchText);
-        public bool IsEmptyStateVisible => SelectedGroup == null && Groups.Any() && !IsGlobalSearchActive;
+
+        public bool IsEmptyStateVisible =>
+            _currentSystemGroup == null && _currentGroup == null && Groups.Any() && !IsGlobalSearchActive;
+
         public bool IsNoGroupsStateVisible => !Groups.Any();
-        public bool IsAccountsPanelVisible => SelectedGroup != null || IsGlobalSearchActive;
-        public bool IsLocalSearchVisible => SelectedGroup != null && !IsGlobalSearchActive;
+        public bool IsAccountsPanelVisible => _currentSystemGroup != null || _currentGroup != null || IsGlobalSearchActive;
+        public bool IsLocalSearchVisible => (_currentSystemGroup != null || _currentGroup != null) && !IsGlobalSearchActive;
+
+        // Special view states
+        public bool IsViewingTrash => _currentSystemGroup?.Id == "trash";
+        public bool IsViewingArchive => _currentSystemGroup?.Id == "archive";
+        public bool IsViewingFavorites => _currentSystemGroup?.Id == "favorites";
+        public bool IsViewingAll => _currentSystemGroup?.Id == "all";
+        public bool IsViewingActiveAccounts => IsViewingAll || IsViewingFavorites || _currentGroup != null;
+        public bool CanAddAccount => _currentGroup != null && !IsViewingSystemGroup;
+        public bool ShowAddAccountButton => CanAddAccount;
+        public bool IsViewingSystemGroup => _currentSystemGroup != null;
 
         // Dynamic UI Content Properties
         public string BreadcrumbText
@@ -124,7 +118,9 @@ namespace AccountManager.ViewModels
             {
                 if (IsGlobalSearchActive)
                     return $"Search Results for \"{GlobalSearchText}\"";
-                return SelectedGroup != null ? $"Groups > {SelectedGroup.Name}" : "Groups";
+                if (_currentSystemGroup != null)
+                    return _currentSystemGroup.Name;
+                return _currentGroup != null ? $"Vaults > {_currentGroup.Name}" : "Vaults";
             }
         }
 
@@ -134,7 +130,9 @@ namespace AccountManager.ViewModels
             {
                 if (IsGlobalSearchActive)
                     return "Search Results";
-                return SelectedGroup?.Name ?? "Select Group";
+                if (_currentSystemGroup != null)
+                    return _currentSystemGroup.Name;
+                return _currentGroup?.Name ?? "Select Group";
             }
         }
 
@@ -144,13 +142,39 @@ namespace AccountManager.ViewModels
             {
                 if (IsGlobalSearchActive)
                     return $"{GlobalSearchResults.Count} accounts found";
-                return SelectedGroup != null ? $"{SelectedGroup.Accounts.Count} accounts" : "0 accounts";
+                if (_currentSystemGroup != null)
+                    return $"{_currentSystemGroup.Count} accounts";
+                return _currentGroup != null ? $"{_currentGroup.Accounts.Count(a => a.IsActive)} accounts" : "0 accounts";
             }
         }
 
-        public string HeaderIcon => IsGlobalSearchActive ? "Magnify" : "Account";
+        public string HeaderIcon
+        {
+            get
+            {
+                if (IsGlobalSearchActive)
+                    return "Magnify";
+                if (_currentSystemGroup != null)
+                    return _currentSystemGroup.Icon;
+                return "Account";
+            }
+        }
 
-        public string EmptyStateIcon => IsGlobalSearchActive ? "AccountSearch" : "AccountOff";
+        public string EmptyStateIcon
+        {
+            get
+            {
+                if (IsGlobalSearchActive)
+                    return "AccountSearch";
+                if (_currentSystemGroup?.Id == "favorites")
+                    return "StarOutline";
+                if (_currentSystemGroup?.Id == "archive")
+                    return "Archive";
+                if (_currentSystemGroup?.Id == "trash")
+                    return "Delete";
+                return "AccountOff";
+            }
+        }
 
         public string EmptyStateTitle
         {
@@ -158,7 +182,13 @@ namespace AccountManager.ViewModels
             {
                 if (IsGlobalSearchActive)
                     return "No accounts found";
-                return SelectedGroup != null ? "No accounts yet" : "Select a group";
+                if (_currentSystemGroup?.Id == "favorites")
+                    return "No favorites yet";
+                if (_currentSystemGroup?.Id == "archive")
+                    return "No archived accounts";
+                if (_currentSystemGroup?.Id == "trash")
+                    return "Trash is empty";
+                return _currentGroup != null ? "No accounts yet" : "Select a group";
             }
         }
 
@@ -168,18 +198,25 @@ namespace AccountManager.ViewModels
             {
                 if (IsGlobalSearchActive)
                     return $"No accounts match \"{GlobalSearchText}\"";
-                return SelectedGroup != null ? "Click the + button to create your first account" : "Choose a group from the sidebar";
+                if (_currentSystemGroup?.Id == "favorites")
+                    return "Mark accounts as favorites by clicking the star icon";
+                if (_currentSystemGroup?.Id == "archive")
+                    return "Archived accounts will appear here";
+                if (_currentSystemGroup?.Id == "trash")
+                    return "Deleted accounts will appear here";
+                return _currentGroup != null
+                    ? "Click the + button to create your first account"
+                    : "Choose a group from the sidebar";
             }
         }
 
         // Commands
-        public ICommand AddGroupCommand { get; private set; }
-        public ICommand EditGroupCommand { get; private set; }
-        public ICommand DeleteGroupCommand { get; private set; }
-        public ICommand SelectGroupCommand { get; private set; }
         public ICommand AddAccountCommand { get; private set; }
         public ICommand EditAccountCommand { get; private set; }
         public ICommand DeleteAccountCommand { get; private set; }
+        public ICommand ToggleFavoriteCommand { get; private set; }
+        public ICommand ArchiveAccountCommand { get; private set; }
+        public ICommand RestoreAccountCommand { get; private set; }
         public ICommand CopyEmailCommand { get; private set; }
         public ICommand CopyUsernameCommand { get; private set; }
         public ICommand CopyPasswordCommand { get; private set; }
@@ -193,20 +230,22 @@ namespace AccountManager.ViewModels
         public MainViewModel()
         {
             _jsonService = new JsonService();
-            
+            SidebarViewModel = new SidebarViewModel(_jsonService);
+
             InitializeCommands();
+            SubscribeToSidebarEvents();
+            SubscribeToSettingsEvents();
             LoadData();
         }
 
         private void InitializeCommands()
         {
-            AddGroupCommand = new RelayCommand(AddGroup);
-            EditGroupCommand = new RelayCommand(EditGroup);
-            DeleteGroupCommand = new RelayCommand(DeleteGroup);
-            SelectGroupCommand = new RelayCommand(SelectGroup);
-            AddAccountCommand = new RelayCommand(AddAccount, _ => SelectedGroup != null);
+            AddAccountCommand = new RelayCommand(AddAccount, _ => CanAddAccount); // Updated condition
             EditAccountCommand = new RelayCommand(EditAccount);
             DeleteAccountCommand = new RelayCommand(DeleteAccount);
+            ToggleFavoriteCommand = new RelayCommand(ToggleFavorite);
+            ArchiveAccountCommand = new RelayCommand(ArchiveAccount);
+            RestoreAccountCommand = new RelayCommand(RestoreAccount);
             CopyEmailCommand = new RelayCommand(CopyEmail);
             CopyUsernameCommand = new RelayCommand(CopyUsername);
             CopyPasswordCommand = new RelayCommand(CopyPassword);
@@ -218,13 +257,88 @@ namespace AccountManager.ViewModels
             ToggleThemeCommand = new RelayCommand(_ => ThemeService.ToggleTheme());
         }
 
-        private void SelectGroup(object parameter)
+        private void SubscribeToSidebarEvents()
         {
-            if (parameter is AccountGroup group)
+            SidebarViewModel.GroupSelectionChanged += OnGroupSelectionChanged;
+            SidebarViewModel.SystemGroupSelectionChanged += OnSystemGroupSelectionChanged;
+            SidebarViewModel.DataChanged += OnSidebarDataChanged;
+        }
+
+        private void SubscribeToSettingsEvents()
+        {
+            SettingsService.Instance.TrashSettingChanged += OnTrashSettingChanged;
+            SettingsService.Instance.ArchiveSettingChanged += OnArchiveSettingChanged;
+        }
+
+        private void OnGroupSelectionChanged(object sender, GroupSelectionEventArgs e)
+        {
+            GlobalSearchText = "";
+            _currentGroup = e.SelectedGroup;
+            _currentSystemGroup = null;
+            
+            RefreshUIAfterSelection();
+            UpdateFilteredAccounts();
+            UpdateDisplayedAccounts();
+        }
+
+        private void OnSystemGroupSelectionChanged(object sender, SystemGroupSelectionEventArgs e)
+        {
+            GlobalSearchText = "";
+            _currentSystemGroup = e.SelectedSystemGroup;
+            _currentGroup = null;
+            
+            RefreshUIAfterSelection();
+            UpdateFilteredAccounts();
+            UpdateDisplayedAccounts();
+        }
+
+        private void OnSidebarDataChanged(object sender, EventArgs e)
+        {
+            // Reload groups when sidebar data changes
+            Groups.Clear();
+            foreach (var group in SidebarViewModel.AllGroups)
             {
-                GlobalSearchText = "";
-                SelectedGroup = group;
+                Groups.Add(group);
             }
+
+            UpdateGlobalSearchResults();
+            UpdateDisplayedAccounts();
+            RefreshUIAfterSelection();
+        }
+
+        private void OnTrashSettingChanged(bool newValue)
+        {
+            SidebarViewModel.OnTrashSettingChanged(newValue);
+        }
+
+        private void OnArchiveSettingChanged(bool newValue)
+        {
+            SidebarViewModel.OnArchiveSettingChanged(newValue);
+        }
+
+        private void RefreshUIAfterSelection()
+        {
+            OnPropertiesChanged(
+                nameof(IsEmptyStateVisible),
+                nameof(IsNoGroupsStateVisible),
+                nameof(IsAccountsPanelVisible),
+                nameof(IsLocalSearchVisible),
+                nameof(BreadcrumbText),
+                nameof(HeaderTitle),
+                nameof(HeaderSubtitle),
+                nameof(HeaderIcon),
+                nameof(EmptyStateIcon),
+                nameof(EmptyStateTitle),
+                nameof(EmptyStateMessage),
+                nameof(IsViewingTrash),
+                nameof(IsViewingArchive),
+                nameof(IsViewingFavorites),
+                nameof(IsViewingAll),
+                nameof(IsViewingActiveAccounts),
+                nameof(CanAddAccount),           
+                nameof(ShowAddAccountButton),   
+                nameof(IsViewingSystemGroup)
+            );
         }
 
         private void LoadData()
@@ -233,13 +347,16 @@ namespace AccountManager.ViewModels
             {
                 HasError = false;
                 ErrorMessage = "";
-                
+
                 var data = _jsonService.LoadData();
                 Groups.Clear();
                 foreach (var group in data.Groups)
                 {
                     Groups.Add(group);
                 }
+
+                // Load groups into sidebar
+                SidebarViewModel.LoadGroups(Groups);
 
                 if (Groups.Any())
                 {
@@ -264,137 +381,42 @@ namespace AccountManager.ViewModels
             ErrorMessage = "";
         }
 
-        private void SaveData()
+        private void NotifyDataChanged()
         {
-            try
-            {
-                var data = new AccountData { Groups = Groups.ToList() };
-                _jsonService.SaveData(data);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error saving data: {ex.Message}", "Save Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        // Group Operations
-        private async void AddGroup(object parameter)
-        {
-            try
-            {
-                var dialog = new GroupDialog();
-                dialog.SetupForCreate();
-                
-                var result = await DialogService.ShowDialogAsync(dialog);
-                
-                if (result == true && dialog.ViewModel?.CanSave == true)
-                {
-                    var newGroup = dialog.ViewModel.CreateGroup();
-                    if (newGroup != null)
-                    {
-                        Groups.Add(newGroup);
-                        SelectedGroup = newGroup;
-                        SaveData();
-                        
-                        OnPropertiesChanged(nameof(IsNoGroupsStateVisible), nameof(IsEmptyStateVisible));
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error adding group: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async void EditGroup(object parameter)
-        {
-            if (parameter is not AccountGroup group) return;
-
-            try
-            {
-                var dialog = new GroupDialog();
-                dialog.SetupForEdit(group);
-                
-                var result = await DialogService.ShowDialogAsync(dialog);
-                
-                if (result == true && dialog.ViewModel?.CanSave == true)
-                {
-                    dialog.ViewModel.ApplyChanges();
-                    SaveData();
-                    
-                    OnPropertiesChanged(nameof(BreadcrumbText), nameof(HeaderTitle));
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error editing group: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async void DeleteGroup(object parameter)
-        {
-            if (parameter is not AccountGroup group) return;
-
-            try
-            {
-                if (SettingsService.Instance.ConfirmGroupDelete)
-                {
-                    var confirmDialog = new ConfirmationDialog();
-                    confirmDialog.SetupForGroupDelete(group);
-                    
-                    var result = await DialogService.ShowDialogAsync(confirmDialog);
-                    
-                    if (confirmDialog.DialogResult != true)
-                        return;
-                }
-
-                Groups.Remove(group);
-                
-                if (SelectedGroup == group)
-                    SelectedGroup = null;
-                
-                SaveData();
-                
-                OnPropertiesChanged(nameof(IsNoGroupsStateVisible), nameof(IsEmptyStateVisible));
-                UpdateGlobalSearchResults();
-                UpdateDisplayedAccounts();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error deleting group: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            SidebarViewModel.RefreshCounts();
+            UpdateGlobalSearchResults();
+            UpdateDisplayedAccounts();
         }
 
         // Account Operations
         private async void AddAccount(object parameter)
         {
-            if (SelectedGroup == null) return;
+            if (_currentGroup == null) return;
 
             try
             {
                 var dialog = new AccountDialog();
                 dialog.SetupForCreate();
-                
+
                 var result = await DialogService.ShowDialogAsync(dialog);
-                
+
                 if (result == true && dialog.ViewModel?.CanSave == true)
                 {
                     var newAccount = dialog.ViewModel.CreateAccount();
                     if (newAccount != null)
                     {
-                        SelectedGroup.Accounts.Add(newAccount);
-                        UpdateFilteredAccounts();
-                        UpdateGlobalSearchResults();
-                        UpdateDisplayedAccounts();
+                        _currentGroup.Accounts.Add(newAccount);
                         SaveData();
-                        
+                        NotifyDataChanged();
+                        UpdateFilteredAccounts();
                         OnPropertyChanged(nameof(HeaderSubtitle));
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error adding account: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error adding account: {ex.Message}", "Error", MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
 
@@ -406,22 +428,21 @@ namespace AccountManager.ViewModels
             {
                 var dialog = new AccountDialog();
                 dialog.SetupForEdit(account);
-                
+
                 var result = await DialogService.ShowDialogAsync(dialog);
-                
+
                 if (result == true && dialog.ViewModel?.CanSave == true)
                 {
                     dialog.ViewModel.ApplyChanges();
                     SaveData();
-                    
+                    NotifyDataChanged();
                     UpdateFilteredAccounts();
-                    UpdateGlobalSearchResults();
-                    UpdateDisplayedAccounts();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error editing account: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error editing account: {ex.Message}", "Error", MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
 
@@ -434,28 +455,131 @@ namespace AccountManager.ViewModels
 
             try
             {
-                if (SettingsService.Instance.ConfirmAccountDelete)
+                // If trash is enabled, move to trash instead of permanent deletion
+                if (SettingsService.Instance.EnableTrash)
                 {
-                    var confirmDialog = new ConfirmationDialog();
-                    confirmDialog.SetupForAccountDelete(account);
-                    
-                    var result = await DialogService.ShowDialogAsync(confirmDialog);
-                    
-                    if (result != true || !confirmDialog.ViewModel.Result)
-                        return;
+                    if (SettingsService.Instance.ConfirmAccountDelete)
+                    {
+                        var confirmDialog = new ConfirmationDialog();
+                        confirmDialog.SetupForAccountTrash(account);
+
+                        var result = await DialogService.ShowDialogAsync(confirmDialog);
+
+                        if (result != true || !confirmDialog.ViewModel.Result)
+                            return;
+                    }
+
+                    SidebarViewModel.MoveAccountToTrash(account);
+                }
+                else
+                {
+                    // Permanent deletion
+                    if (SettingsService.Instance.ConfirmAccountDelete)
+                    {
+                        var confirmDialog = new ConfirmationDialog();
+                        confirmDialog.SetupForAccountDelete(account);
+
+                        var result = await DialogService.ShowDialogAsync(confirmDialog);
+
+                        if (result != true || !confirmDialog.ViewModel.Result)
+                            return;
+                    }
+
+                    containingGroup.Accounts.Remove(account);
+                    SaveData();
                 }
 
-                containingGroup.Accounts.Remove(account);
+                NotifyDataChanged();
                 UpdateFilteredAccounts();
-                UpdateGlobalSearchResults();
-                UpdateDisplayedAccounts();
-                SaveData();
-                
                 OnPropertyChanged(nameof(HeaderSubtitle));
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error deleting account: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error deleting account: {ex.Message}", "Error", MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void ToggleFavorite(object parameter)
+        {
+            if (parameter is Account account)
+            {
+                account.IsFavorite = !account.IsFavorite;
+                SaveData();
+                NotifyDataChanged();
+
+                // Refresh filtered accounts if viewing favorites
+                if (_currentSystemGroup?.Id == "favorites")
+                {
+                    UpdateFilteredAccounts();
+                }
+
+                OnPropertyChanged(nameof(HeaderSubtitle));
+            }
+        }
+
+        private void ArchiveAccount(object parameter)
+        {
+            if (parameter is not Account account) return;
+
+            if (!SettingsService.Instance.EnableArchive)
+            {
+                MessageBox.Show("Archive functionality is disabled in settings.", "Archive Disabled", 
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            try
+            {
+                SidebarViewModel.MoveAccountToArchive(account);
+                NotifyDataChanged();
+                UpdateFilteredAccounts();
+                OnPropertyChanged(nameof(HeaderSubtitle));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error archiving account: {ex.Message}", "Error", MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void RestoreAccount(object parameter)
+        {
+            if (parameter is not Account account) return;
+
+            try
+            {
+                if (account.IsArchived)
+                {
+                    SidebarViewModel.RestoreArchivedAccountToGroup(account);
+                }
+                else
+                {
+                    SidebarViewModel.RestoreAccount(account);
+                }
+                
+                NotifyDataChanged();
+                UpdateFilteredAccounts();
+                OnPropertyChanged(nameof(HeaderSubtitle));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error restoring account: {ex.Message}", "Error", MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void SaveData()
+        {
+            try
+            {
+                var data = new AccountData { Groups = Groups.ToList() };
+                _jsonService.SaveData(data);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving data: {ex.Message}", "Save Error", MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
 
@@ -510,10 +634,10 @@ namespace AccountManager.ViewModels
                         UseShellExecute = true
                     });
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    MessageBox.Show("Failed to open website.", "Open Website Error", 
-                                MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Failed to open website.", "Open Website Error",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
         }
@@ -522,15 +646,51 @@ namespace AccountManager.ViewModels
         private void UpdateFilteredAccounts()
         {
             FilteredAccounts.Clear();
-            
-            if (SelectedGroup == null) return;
 
-            var accounts = SelectedGroup.Accounts.AsEnumerable();
-            
+            ObservableCollection<Account> sourceAccounts = new();
+
+            if (_currentSystemGroup?.Id == "all")
+            {
+                // Get all active accounts from all groups (not trashed or archived)
+                sourceAccounts = new ObservableCollection<Account>(
+                    Groups.SelectMany(g => g.Accounts).Where(a => a.IsActive)
+                );
+            }
+            else if (_currentSystemGroup?.Id == "favorites")
+            {
+                // Get all favorite accounts that are active
+                sourceAccounts = new ObservableCollection<Account>(
+                    Groups.SelectMany(g => g.Accounts).Where(a => a.IsFavorite && a.IsActive)
+                );
+            }
+            else if (_currentSystemGroup?.Id == "archive")
+            {
+                // Get all archived accounts
+                sourceAccounts = new ObservableCollection<Account>(SidebarViewModel.ArchivedAccounts);
+            }
+            else if (_currentSystemGroup?.Id == "trash")
+            {
+                // Get all trashed accounts
+                sourceAccounts = new ObservableCollection<Account>(SidebarViewModel.TrashedAccounts);
+            }
+            else if (_currentGroup != null)
+            {
+                // Get active accounts from selected group
+                sourceAccounts = new ObservableCollection<Account>(
+                    _currentGroup.Accounts.Where(a => a.IsActive)
+                );
+            }
+            else
+            {
+                return;
+            }
+
+            var accounts = sourceAccounts.AsEnumerable();
+
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
                 var search = SearchText.ToLower();
-                accounts = accounts.Where(a => 
+                accounts = accounts.Where(a =>
                     (a.Name?.ToLower().Contains(search) ?? false) ||
                     (a.Username?.ToLower().Contains(search) ?? false) ||
                     (a.Email?.ToLower().Contains(search) ?? false) ||
@@ -546,13 +706,13 @@ namespace AccountManager.ViewModels
         private void UpdateGlobalSearchResults()
         {
             GlobalSearchResults.Clear();
-            
+
             if (string.IsNullOrWhiteSpace(GlobalSearchText)) return;
 
             var search = GlobalSearchText.ToLower();
-            var allAccounts = Groups.SelectMany(g => g.Accounts);
-            
-            var matchingAccounts = allAccounts.Where(a => 
+            var allAccounts = Groups.SelectMany(g => g.Accounts).Where(a => a.IsActive);
+
+            var matchingAccounts = allAccounts.Where(a =>
                 (a.Name?.ToLower().Contains(search) ?? false) ||
                 (a.Username?.ToLower().Contains(search) ?? false) ||
                 (a.Email?.ToLower().Contains(search) ?? false) ||
@@ -573,6 +733,19 @@ namespace AccountManager.ViewModels
                 nameof(EmptyStateMessage)
             );
         }
+
+        public void Dispose()
+        {
+            SettingsService.Instance.TrashSettingChanged -= OnTrashSettingChanged;
+            SettingsService.Instance.ArchiveSettingChanged -= OnArchiveSettingChanged;
+            
+            if (SidebarViewModel != null)
+            {
+                SidebarViewModel.GroupSelectionChanged -= OnGroupSelectionChanged;
+                SidebarViewModel.SystemGroupSelectionChanged -= OnSystemGroupSelectionChanged;
+                SidebarViewModel.DataChanged -= OnSidebarDataChanged;
+            }
+        }
     }
 
     // Helper class for clipboard operations
@@ -586,8 +759,8 @@ namespace AccountManager.ViewModels
             }
             catch (Exception)
             {
-                MessageBox.Show("Failed to copy to clipboard.", "Copy Error", 
-                            MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Failed to copy to clipboard.", "Copy Error",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
     }

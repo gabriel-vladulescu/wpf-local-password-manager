@@ -83,10 +83,38 @@
         </Style.Triggers>
     </Style>
 
+    <!-- Action Menu Button Style -->
+    <Style x:Key="ActionMenuButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Width" Value="40"/>
+        <Setter Property="Height" Value="40"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                            CornerRadius="8">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource InputBackgroundColor}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource BorderColor}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- Account Card Content Template -->
     <DataTemplate x:Key="AccountCardTemplate">
-        <Grid Margin="6">
-            <!-- Background Border (scales independently) -->
+        <Grid Margin="6" x:Name="CardContainer">
+            <!-- Main Card Background -->
             <Border x:Name="CardBackground"
                     Background="{DynamicResource CardBackgroundColor}"
                     BorderBrush="{DynamicResource BorderColor}"
@@ -99,9 +127,8 @@
                 </Border.RenderTransform>
             </Border>
             
-            <!-- Static Content Layer (never transforms) -->
-            <Border Padding="16,12,16,12"
-                    CornerRadius="16">
+            <!-- Main Card Content -->
+            <Border CornerRadius="16">
                 <Border.InputBindings>
                     <MouseBinding MouseAction="LeftClick" 
                                 Command="{Binding DataContext.EditAccountCommand, 
@@ -123,239 +150,333 @@
                     <!-- Card Content -->
                     <Grid>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <!-- Header with Avatar and Actions -->
-                        <Grid Grid.Row="0" Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            
-                            <!-- Avatar -->
-                            <Border Grid.Column="0" 
-                                Background="{StaticResource PrimaryColor}"
-                                Width="40" Height="40" 
-                                CornerRadius="10">
-                                <TextBlock Text="{Binding Name, Converter={StaticResource FirstLetterConverter}, FallbackValue=A}" 
-                                        Foreground="White"
-                                        FontSize="16" 
-                                        FontWeight="Bold"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        UseLayoutRounding="True"
-                                        TextOptions.TextFormattingMode="Display"
-                                        TextOptions.TextRenderingMode="ClearType"/>
-                            </Border>
-                            
-                            <!-- Account Name -->
-                            <TextBlock Grid.Column="1"
-                                    Text="{Binding Name}" 
-                                    FontSize="16" 
-                                    FontWeight="Bold"
-                                    Foreground="{DynamicResource TextPrimaryColor}"
-                                    VerticalAlignment="Center"
-                                    Margin="12,0,0,0"
-                                    UseLayoutRounding="True"
-                                    TextOptions.TextFormattingMode="Display"
-                                    TextOptions.TextRenderingMode="ClearType"/>
-                            
-                            <!-- Action Buttons -->
-                            <StackPanel Grid.Column="2" 
-                                    Orientation="Horizontal" 
-                                    VerticalAlignment="Center">
-                                <Button Style="{StaticResource MaterialDesignIconButton}"
-                                    ToolTip="Edit Account"
-                                    Command="{Binding DataContext.EditAccountCommand,
+                        <!-- Open Website Corner Icon -->
+                        <Border CornerRadius="0,16,0,16" 
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top" 
+                                Width="32" 
+                                Height="32" 
+                                Panel.ZIndex="1"
+                                Background="{DynamicResource InputBackgroundColor}"
+                                Visibility="{Binding HasWebsite, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Button Style="{StaticResource MaterialDesignIconButton}"
+                                    ToolTip="Open Website"
+                                    Command="{Binding DataContext.OpenWebsiteCommand,
                                             RelativeSource={RelativeSource AncestorType=Window}}"
                                     CommandParameter="{Binding}"
-                                    Width="32" Height="32">
-                                    <materialDesign:PackIcon Kind="Pencil" 
-                                                        Foreground="#94A3B8" 
-                                                        Width="16" Height="16"/>
+                                    Width="32" Height="32"
+                                    Background="Transparent">
+                                <materialDesign:PackIcon Kind="OpenInNew" 
+                                                    Foreground="#94A3B8" 
+                                                    Width="16" Height="16"/>
+                            </Button>
+                        </Border>
+
+                        <!-- Content Section with Padding -->
+                        <Border Grid.Row="0" 
+                                Padding="14,14,14,14">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Header with Avatar and Quick Actions -->
+                                <Grid Grid.Row="0" Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <!-- Avatar -->
+                                    <Border Grid.Column="0" 
+                                        Background="{StaticResource PrimaryColor}"
+                                        Width="40" Height="40" 
+                                        CornerRadius="10">
+                                        <TextBlock Text="{Binding Name, Converter={StaticResource FirstLetterConverter}, FallbackValue=A}" 
+                                                Foreground="White"
+                                                FontSize="16" 
+                                                FontWeight="Bold"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                UseLayoutRounding="True"
+                                                TextOptions.TextFormattingMode="Display"
+                                                TextOptions.TextRenderingMode="ClearType"/>
+                                    </Border>
+                                    
+                                    <!-- Account Name and Status -->
+                                    <StackPanel Grid.Column="1" 
+                                              VerticalAlignment="Center"
+                                              Margin="12,0,30,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Name}" 
+                                                    FontSize="16" 
+                                                    FontWeight="Bold"
+                                                    Foreground="{DynamicResource TextPrimaryColor}"
+                                                    UseLayoutRounding="True"
+                                                    TextOptions.TextFormattingMode="Display"
+                                                    TextOptions.TextRenderingMode="ClearType"/>
+                                            
+                                        </StackPanel>
+                                        
+                                        <!-- Website URL (if available) -->
+                                        <TextBlock Text="{Binding WebsiteDisplayUrl}" 
+                                                 FontSize="12"
+                                                 Foreground="{DynamicResource TextSecondaryColor}"
+                                                 Visibility="{Binding HasWebsite, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Account Details -->
+                                <StackPanel Grid.Row="1" Margin="0,12,0,0">
+                                    <!-- Email -->
+                                    <Grid Margin="0,0,0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <TextBlock Grid.Column="0"
+                                                Text="Email" 
+                                                Foreground="{DynamicResource TextSecondaryColor}"
+                                                FontSize="14"/>
+                                        
+                                        <TextBlock Grid.Column="1"
+                                                Foreground="{DynamicResource TextPrimaryColor}"
+                                                FontSize="14"
+                                                FontWeight="Medium">
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{StaticResource ConditionalTextConverter}">
+                                                    <Binding Path="Email"/>
+                                                    <Binding Source="{x:Static services:SettingsService.Instance}" Path="CensorAccountData"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                        
+                                        <Button Grid.Column="2"
+                                            Style="{StaticResource MaterialDesignIconButton}"
+                                            Command="{Binding DataContext.CopyEmailCommand,
+                                                    RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip="Copy Email"
+                                            Width="24" Height="24">
+                                            <materialDesign:PackIcon Kind="ContentCopy" 
+                                                                Foreground="#94A3B8" 
+                                                                Width="12" Height="12"/>
+                                        </Button>
+                                    </Grid>
+                                    
+                                    <!-- Username -->
+                                    <Grid Margin="0,0,0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <TextBlock Grid.Column="0"
+                                                Text="Username" 
+                                                Foreground="{DynamicResource TextSecondaryColor}"
+                                                FontSize="14"/>
+                                        
+                                        <TextBlock Grid.Column="1"
+                                                Foreground="{DynamicResource TextPrimaryColor}"
+                                                FontSize="14"
+                                                FontWeight="Medium">
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{StaticResource ConditionalTextConverter}">
+                                                    <Binding Path="Username"/>
+                                                    <Binding Source="{x:Static services:SettingsService.Instance}" Path="CensorAccountData"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                        
+                                        <Button Grid.Column="2"
+                                            Style="{StaticResource MaterialDesignIconButton}"
+                                            Command="{Binding DataContext.CopyUsernameCommand,
+                                                    RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip="Copy Username"
+                                            Width="24" Height="24">
+                                            <materialDesign:PackIcon Kind="ContentCopy" 
+                                                                Foreground="#94A3B8" 
+                                                                Width="12" Height="12"/>
+                                        </Button>
+                                    </Grid>
+                                    
+                                    <!-- Password -->
+                                    <Grid Margin="0,0,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <TextBlock Grid.Column="0"
+                                                Text="Password" 
+                                                Foreground="{DynamicResource TextSecondaryColor}"
+                                                FontSize="14"/>
+                                        
+                                        <TextBlock Grid.Column="1"
+                                                Foreground="{DynamicResource TextPrimaryColor}"
+                                                FontSize="14"
+                                                FontWeight="Medium"
+                                                UseLayoutRounding="True"
+                                                TextOptions.TextFormattingMode="Display"
+                                                TextOptions.TextRenderingMode="ClearType">
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{StaticResource PasswordDisplayConverter}">
+                                                    <Binding Path="Password"/>
+                                                    <Binding Source="{x:Static services:SettingsService.Instance}" Path="CensorPassword"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+
+                                        <Button Grid.Column="2"
+                                            Style="{StaticResource MaterialDesignIconButton}"
+                                            ToolTip="Copy Password"
+                                            Command="{Binding DataContext.CopyPasswordCommand,
+                                                    RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}"
+                                            Width="24" Height="24">
+                                            <materialDesign:PackIcon Kind="ContentCopy" 
+                                                                Foreground="#94A3B8" 
+                                                                Width="12" Height="12"/>
+                                        </Button>
+                                    </Grid>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Full-Width Action Menu Bar at Bottom -->
+                        <Border Grid.Row="1" 
+                                Background="{DynamicResource InputBackgroundColor}"
+                                BorderThickness="0"
+                                CornerRadius="0,0,16,16"
+                                Padding="16,8">
+                            <StackPanel Orientation="Horizontal" 
+                                       HorizontalAlignment="Center">
+                                <!-- Star/Favorite Button -->
+                                <Button Style="{StaticResource ActionMenuButton}"
+                                        ToolTip="Mark as Favorite"
+                                        Command="{Binding DataContext.ToggleFavoriteCommand,
+                                                RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}"
+                                        Width="50" Height="32"
+                                        Margin="2"
+                                        Visibility="{Binding ShowFavoriteIcon, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <materialDesign:PackIcon x:Name="StarIcon"
+                                                        Kind="Star" 
+                                                        Width="16" Height="16">
+                                        <materialDesign:PackIcon.Style>
+                                            <Style TargetType="materialDesign:PackIcon">
+                                                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryColor}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                                                        <Setter Property="Foreground" Value="#F59E0B"/>
+                                                        <Setter Property="Kind" Value="Star"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsFavorite}" Value="False">
+                                                        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryColor}"/>
+                                                        <Setter Property="Kind" Value="StarOutline"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </materialDesign:PackIcon.Style>
+                                    </materialDesign:PackIcon>
                                 </Button>
-                                <Button Style="{StaticResource MaterialDesignIconButton}"
-                                    ToolTip="Delete Account"
-                                    Command="{Binding DataContext.DeleteAccountCommand,
-                                            RelativeSource={RelativeSource AncestorType=Window}}"
-                                    CommandParameter="{Binding}"
-                                    Width="32" Height="32">
+
+                                <!-- Separator -->
+                                <Rectangle Width="1" 
+                                         Fill="{DynamicResource CardBackgroundColor}" 
+                                         Margin="4,6"/>
+                                
+                                <!-- Edit Button -->
+                                <Button Style="{StaticResource ActionMenuButton}"
+                                        ToolTip="Edit Account"
+                                        Command="{Binding DataContext.EditAccountCommand,
+                                                RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}"
+                                        Width="50" Height="32"
+                                        Margin="2">
+                                    <materialDesign:PackIcon Kind="Pencil" 
+                                                           Foreground="{DynamicResource PrimaryColor}" 
+                                                           Width="16" Height="16"/>
+                                </Button>
+                                
+                                <!-- Separator -->
+                                <Rectangle Width="1" 
+                                         Fill="{DynamicResource CardBackgroundColor}" 
+                                         Margin="4,6"/>
+                                
+                                <!-- Archive Button -->
+<Button Width="50" Height="32" Margin="2">
+    <Button.Style>
+        <Style TargetType="Button" BasedOn="{StaticResource ActionMenuButton}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsArchived}" Value="False">
+                    <Setter Property="ToolTip" Value="Archive Account"/>
+                    <Setter Property="Command" Value="{Binding DataContext.ArchiveAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsArchived}" Value="True">
+                    <Setter Property="ToolTip" Value="Restore Account"/>
+                    <Setter Property="Command" Value="{Binding DataContext.RestoreAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Button.Style>
+    <Button.CommandParameter>
+        <Binding/>
+    </Button.CommandParameter>
+    <materialDesign:PackIcon Width="16" Height="16">
+        <materialDesign:PackIcon.Style>
+            <Style TargetType="materialDesign:PackIcon">
+                <Setter Property="Kind" Value="Archive"/>
+                <Setter Property="Foreground" Value="#8B5CF6"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsArchived}" Value="True">
+                        <Setter Property="Kind" Value="ArchiveArrowUp"/>
+                        <Setter Property="Foreground" Value="#10B981"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </materialDesign:PackIcon.Style>
+    </materialDesign:PackIcon>
+</Button>
+                                <!-- Separator -->
+                                <Rectangle Width="1" 
+                                         Fill="{DynamicResource CardBackgroundColor}" 
+                                         Margin="4,6"/>
+                                
+                                <!-- Delete Button -->
+                                <Button Style="{StaticResource ActionMenuButton}"
+                                        ToolTip="Delete Account"
+                                        Command="{Binding DataContext.DeleteAccountCommand,
+                                                RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}"
+                                        Width="50" Height="32"
+                                        Margin="2">
                                     <materialDesign:PackIcon Kind="Delete" 
-                                                        Foreground="#EF4444" 
-                                                        Width="16" Height="16"/>
+                                                           Foreground="#EF4444" 
+                                                           Width="16" Height="16"/>
                                 </Button>
                             </StackPanel>
-                        </Grid>
-
-                        <!-- Account Details -->
-                        <StackPanel Grid.Row="1">
-                            <!-- Website -->
-                            <Grid Margin="0,0,0,6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="80"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                
-                                <TextBlock Grid.Column="0"
-                                        Text="Website" 
-                                        Foreground="{DynamicResource TextSecondaryColor}"
-                                        FontSize="14"/>
-                                
-                                <TextBlock Grid.Column="1"
-                                        Foreground="{DynamicResource TextPrimaryColor}"
-                                        FontSize="14"
-                                        FontWeight="Medium">
-                                    <TextBlock.Text>
-                                        <MultiBinding Converter="{StaticResource ConditionalTextConverter}">
-                                            <Binding Path="Website"/>
-                                            <Binding Source="{x:Static services:SettingsService.Instance}" Path="CensorAccountData"/>
-                                        </MultiBinding>
-                                    </TextBlock.Text>
-                                </TextBlock>
-                                
-                                <Button Grid.Column="2"
-                                    Style="{StaticResource MaterialDesignIconButton}"
-                                    Command="{Binding DataContext.CopyWebsiteCommand,
-                                            RelativeSource={RelativeSource AncestorType=Window}}"
-                                    CommandParameter="{Binding}"
-                                    ToolTip="Copy Website"
-                                    Width="24" Height="24">
-                                    <materialDesign:PackIcon Kind="ContentCopy" 
-                                                        Foreground="#94A3B8" 
-                                                        Width="12" Height="12"/>
-                                </Button>
-                            </Grid>
-
-                            <!-- Email -->
-                            <Grid Margin="0,0,0,6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="80"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                
-                                    <TextBlock Grid.Column="0"
-                                            Text="Email" 
-                                            Foreground="{DynamicResource TextSecondaryColor}"
-                                            FontSize="14"/>
-                                    
-                                    <TextBlock Grid.Column="1"
-                                            Foreground="{DynamicResource TextPrimaryColor}"
-                                            FontSize="14"
-                                            FontWeight="Medium">
-                                        <TextBlock.Text>
-                                            <MultiBinding Converter="{StaticResource ConditionalTextConverter}">
-                                                <Binding Path="Email"/>
-                                                <Binding Source="{x:Static services:SettingsService.Instance}" Path="CensorAccountData"/>
-                                            </MultiBinding>
-                                        </TextBlock.Text>
-                                    </TextBlock>
-                                
-                                <Button Grid.Column="2"
-                                    Style="{StaticResource MaterialDesignIconButton}"
-                                    Command="{Binding DataContext.CopyEmailCommand,
-                                            RelativeSource={RelativeSource AncestorType=Window}}"
-                                    CommandParameter="{Binding}"
-                                    ToolTip="Copy Email"
-                                    Width="24" Height="24">
-                                    <materialDesign:PackIcon Kind="ContentCopy" 
-                                                        Foreground="#94A3B8" 
-                                                        Width="12" Height="12"/>
-                                </Button>
-                            </Grid>
-                            
-                            <!-- Username -->
-                            <Grid Margin="0,0,0,6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="80"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                
-                                <TextBlock Grid.Column="0"
-                                        Text="Username" 
-                                        Foreground="{DynamicResource TextSecondaryColor}"
-                                        FontSize="14"/>
-                                
-                                <TextBlock Grid.Column="1"
-                                        Foreground="{DynamicResource TextPrimaryColor}"
-                                        FontSize="14"
-                                        FontWeight="Medium">
-                                    <TextBlock.Text>
-                                        <MultiBinding Converter="{StaticResource ConditionalTextConverter}">
-                                            <Binding Path="Username"/>
-                                            <Binding Source="{x:Static services:SettingsService.Instance}" Path="CensorAccountData"/>
-                                        </MultiBinding>
-                                    </TextBlock.Text>
-                                </TextBlock>
-                                
-                                <Button Grid.Column="2"
-                                    Style="{StaticResource MaterialDesignIconButton}"
-                                    Command="{Binding DataContext.CopyUsernameCommand,
-                                            RelativeSource={RelativeSource AncestorType=Window}}"
-                                    CommandParameter="{Binding}"
-                                    ToolTip="Copy Username"
-                                    Width="24" Height="24">
-                                    <materialDesign:PackIcon Kind="ContentCopy" 
-                                                        Foreground="#94A3B8" 
-                                                        Width="12" Height="12"/>
-                                </Button>
-                            </Grid>
-                            
-                            <!-- Password -->
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="80"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                
-                                <TextBlock Grid.Column="0"
-                                        Text="Password" 
-                                        Foreground="{DynamicResource TextSecondaryColor}"
-                                        FontSize="14"/>
-                                
-                                <TextBlock Grid.Column="1"
-                                        Foreground="{DynamicResource TextPrimaryColor}"
-                                        FontSize="14"
-                                        FontWeight="Medium"
-                                        UseLayoutRounding="True"
-                                        TextOptions.TextFormattingMode="Display"
-                                        TextOptions.TextRenderingMode="ClearType">
-                                    <TextBlock.Text>
-                                        <MultiBinding Converter="{StaticResource PasswordDisplayConverter}">
-                                            <Binding Path="Password"/>
-                                            <Binding Source="{x:Static services:SettingsService.Instance}" Path="CensorPassword"/>
-                                        </MultiBinding>
-                                    </TextBlock.Text>
-                                </TextBlock>
-
-                                <Button Grid.Column="2"
-                                    Style="{StaticResource MaterialDesignIconButton}"
-                                    ToolTip="Copy Password"
-                                    Command="{Binding DataContext.CopyPasswordCommand,
-                                            RelativeSource={RelativeSource AncestorType=Window}}"
-                                    CommandParameter="{Binding}"
-                                    Width="24" Height="24">
-                                    <materialDesign:PackIcon Kind="ContentCopy" 
-                                                        Foreground="#94A3B8" 
-                                                        Width="12" Height="12"/>
-                                </Button>
-                            </Grid>
-                        </StackPanel>
+                        </Border>
                     </Grid>
                 </Grid>
             </Border>
             
-            <!-- Hover Triggers -->
+            <!-- Hover/Animation Triggers - Only for card scaling -->
             <Grid.Triggers>
                 <EventTrigger RoutedEvent="MouseEnter">
                     <BeginStoryboard>
                         <Storyboard>
+                            <!-- Card Scale -->
                             <DoubleAnimation Storyboard.TargetName="CardScale"
                                         Storyboard.TargetProperty="ScaleX"
                                         To="1.02"
@@ -372,6 +493,8 @@
                                     <CubicEase EasingMode="EaseOut"/>
                                 </DoubleAnimation.EasingFunction>
                             </DoubleAnimation>
+                            
+                            <!-- Card Border -->
                             <ColorAnimation Storyboard.TargetName="CardBackground"
                                         Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
                                         To="#6366F1"
@@ -379,9 +502,11 @@
                         </Storyboard>
                     </BeginStoryboard>
                 </EventTrigger>
+                
                 <EventTrigger RoutedEvent="MouseLeave">
                     <BeginStoryboard>
                         <Storyboard>
+                            <!-- Card Scale -->
                             <DoubleAnimation Storyboard.TargetName="CardScale"
                                         Storyboard.TargetProperty="ScaleX"
                                         To="1"
@@ -398,6 +523,8 @@
                                     <ElasticEase EasingMode="EaseOut" Oscillations="1" Springiness="4"/>
                                 </DoubleAnimation.EasingFunction>
                             </DoubleAnimation>
+                            
+                            <!-- Card Border -->
                             <ColorAnimation Storyboard.TargetName="CardBackground"
                                         Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
                                         Duration="0:0:0.2"/>

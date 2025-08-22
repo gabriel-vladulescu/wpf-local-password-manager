@@ -1,0 +1,190 @@
+<UserControl x:Class="AccountManager.Views.Window.Navigation.SystemGroupsList"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d"
+             d:DesignHeight="300" d:DesignWidth="270">
+
+    <UserControl.Resources>
+        <!-- Converter for determining group type -->
+        <Style x:Key="SystemGroupItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,3,0,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="12"
+                                Padding="8,8,0,8">
+                            <ContentPresenter />
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#302c44" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#23232e" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="Gray"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <!-- Dynamic ListBox that shows different group collections based on GroupType -->
+    <ListBox x:Name="GroupsListBox"
+             BorderThickness="0"
+             Background="Transparent"
+             ScrollViewer.VerticalScrollBarVisibility="Auto"
+             ItemContainerStyle="{StaticResource SystemGroupItemStyle}">
+
+        <!-- Item Template for all group types -->
+        <ListBox.ItemTemplate>
+            <DataTemplate>
+                <Grid Background="Transparent">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Group Icon - varies by group type -->
+                    <Border Grid.Column="0" 
+                            Width="32" Height="32"
+                            CornerRadius="20">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <!-- Default for system groups (top/bottom) -->
+                                <Setter Property="Background" Value="{Binding ColorVariant, Converter={StaticResource OpacityBrushConverter}, ConverterParameter=0.2}" />
+                            </Style>
+                        </Border.Style>
+                        <materialDesign:PackIcon Width="16" Height="16"
+                                                 HorizontalAlignment="Center"
+                                                 VerticalAlignment="Center">
+                            <materialDesign:PackIcon.Style>
+                                <Style TargetType="materialDesign:PackIcon">
+                                    <Setter Property="Kind" Value="{Binding Icon}" />
+                                    <Setter Property="Foreground" Value="{Binding ColorVariant}" />
+                                </Style>
+                            </materialDesign:PackIcon.Style>
+                        </materialDesign:PackIcon>
+                    </Border>
+
+                    <!-- Group Info -->
+                    <StackPanel Grid.Column="1" 
+                                Margin="14,0,10,0"
+                                VerticalAlignment="Center" 
+                                HorizontalAlignment="Left">
+                        <TextBlock Text="{Binding Name}" 
+                                   Foreground="{DynamicResource SidebarTextPrimaryColor}"
+                                   FontSize="14" 
+                                   FontWeight="Regular"/>
+                        <TextBlock Foreground="#bfb9d8"
+                                   Opacity="0.7"
+                                   FontSize="12">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <!-- Default binding for system groups -->
+                                    <Setter Property="Text" Value="{Binding Count, StringFormat={}{0} items}" />
+                                    <Style.Triggers>
+                                        <!-- Regular groups use Accounts.Count -->
+                                        <DataTrigger Binding="{Binding GroupType, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="Regular">
+                                            <Setter Property="Text" Value="{Binding Accounts.Count, StringFormat={}{0} items}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+
+                    <!-- Action Buttons -->
+                    <StackPanel Grid.Column="2"
+                                Orientation="Horizontal" 
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Right"
+                                Margin="0,0,10,0">
+                        
+                        <!-- Empty Trash Button (only for trash) -->
+                        <Button Style="{StaticResource MaterialDesignIconButton}"
+                                Width="20" Height="20"
+                                ToolTip="Empty Trash"
+                                Command="{Binding DataContext.EmptyTrashCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                Visibility="{Binding Id, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter=trash}">
+                            <materialDesign:PackIcon Kind="DeleteEmpty" 
+                                                     Foreground="{DynamicResource SidebarTextSecondaryColor}" 
+                                                     Opacity="0.7"
+                                                     Width="16" Height="16"/>
+                        </Button>
+
+                        <!-- Options Button with Popup Menu (only for regular groups) -->
+                        <Button x:Name="OptionsButton"
+                                Width="20" Height="20"
+                                ToolTip="Options"
+                                Margin="0,0,0,0"
+                                Click="OptionsButton_Click">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignIconButton}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding GroupType, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="Regular">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <materialDesign:PackIcon Kind="DotsVertical" 
+                                                    Foreground="#bdbdff" 
+                                                    Opacity="0.7"
+                                                    Width="16" Height="16"/>
+                            
+                            <!-- Popup Menu -->
+                            <Button.ContextMenu>
+                                <ContextMenu Background="#2a2839" 
+                                           BorderBrush="#3d3a4b"
+                                           BorderThickness="1">
+                                    <!-- Edit Menu Item -->
+                                    <MenuItem Header="Edit"
+                                            Command="{Binding DataContext.EditGroupCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            Background="#2a2839"
+                                            Foreground="{DynamicResource SidebarTextPrimaryColor}">
+                                        <MenuItem.Icon>
+                                            <materialDesign:PackIcon Kind="Pencil" 
+                                                                   Foreground="{DynamicResource SidebarTextSecondaryColor}" 
+                                                                   Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    
+                                    <!-- Delete Menu Item -->
+                                    <MenuItem Header="Delete"
+                                            Command="{Binding DataContext.DeleteGroupCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            Background="#2a2839"
+                                            Foreground="{StaticResource DangerColor}">
+                                        <MenuItem.Icon>
+                                            <materialDesign:PackIcon Kind="Delete" 
+                                                                   Foreground="{StaticResource DangerColor}" 
+                                                                   Width="16" Height="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </DataTemplate>
+        </ListBox.ItemTemplate>
+    </ListBox>
+</UserControl>

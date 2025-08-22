@@ -8,57 +8,9 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="180"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         
-        <!-- Logo and Title in Sidebar Area -->
-        <StackPanel Grid.Column="0" 
-                    Orientation="Horizontal" 
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Background="{DynamicResource SidebarColor}">
-            <Border Width="34" Height="34" 
-                    CornerRadius="12"
-                    VerticalAlignment="Center">
-                <Image Width="29" Height="29"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center">
-                    <Image.Style>
-                        <Style TargetType="Image">
-                            <Setter Property="Source" Value="pack://application:,,,/Assets/logo-light.png"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding ThemeService.IsDarkMode}" Value="True">
-                                    <Setter Property="Source" Value="pack://application:,,,/Assets/logo-dark.png"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Image.Style>
-                </Image>
-            </Border>
-            
-            <StackPanel VerticalAlignment="Center" Margin="8,0,0,0">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=Title}"
-                               Foreground="{DynamicResource SidebarTextPrimaryColor}"
-                               FontSize="14" 
-                               FontWeight="Bold"
-                               VerticalAlignment="Center"/>
-                    
-                    <!-- Version Badge -->
-                    <Border Background="{DynamicResource PrimaryColor}"
-                            CornerRadius="8"
-                            Padding="4,1"
-                            Margin="6,0,0,0"
-                            VerticalAlignment="Center">
-                        <TextBlock Text="v1.1.1"
-                                   Foreground="White"
-                                   FontSize="9"
-                                   FontWeight="SemiBold"/>
-                    </Border>
-                </StackPanel>
-            </StackPanel>
-        </StackPanel>
 
         <!-- Draggable Area -->
         <Border Grid.Column="1" 
