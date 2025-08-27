@@ -6,16 +6,16 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d">
 
-    <!-- Theme Toggle Button -->
-    <Button Style="{StaticResource ThemeToggleButton}"
+    <!-- Theme Toggle Button - Optimized for TopBar -->
+    <Button Style="{StaticResource MaterialDesignIconButton}"
             Command="{Binding ToggleThemeCommand}"
             ToolTip="{Binding ThemeService.ThemeDisplayName, StringFormat='Switch to {0} Mode'}"
-            Margin="0,0,12,0">
+            Width="32" Height="32">
         <materialDesign:PackIcon Kind="{Binding ThemeService.IsDarkMode, 
                                 Converter={StaticResource BoolToIconConverter}, 
                                 ConverterParameter='WeatherSunny|WeatherNight'}" 
                                 Foreground="{DynamicResource TextPrimaryColor}" 
-                                Width="20" Height="20"/>
+                                Width="18" Height="18"/>
     </Button>
 
 </UserControl>

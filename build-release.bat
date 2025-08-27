@@ -1,6 +1,19 @@
 @echo off
 echo Building Account Manager...
 
+REM Change to the script's directory
+cd /d "%~dp0"
+
+REM Verify we're in the right directory by checking if the project file exists
+if not exist "AccountManager.csproj" (
+    echo ERROR: AccountManager.csproj not found in current directory!
+    echo Current directory: %cd%
+    echo Please run this script from the project root directory.
+    echo.
+    pause
+    exit /b 1
+)
+
 REM Check if .NET SDK is installed
 dotnet --version >nul 2>&1
 if %errorlevel% neq 0 (
@@ -13,6 +26,7 @@ if %errorlevel% neq 0 (
 )
 
 echo .NET SDK found, continuing build...
+echo Project file found: AccountManager.csproj
 echo.
 
 REM Clean up old build directories first
@@ -24,7 +38,7 @@ if exist ".build" rmdir /s /q ".build"
 
 REM Restore packages
 echo Restoring packages...
-dotnet restore
+dotnet restore AccountManager.csproj
 if %errorlevel% neq 0 (
     echo ERROR: Failed to restore packages
     pause
@@ -33,7 +47,7 @@ if %errorlevel% neq 0 (
 
 REM Build the application
 echo Building application...
-dotnet build --configuration Release --no-restore
+dotnet build AccountManager.csproj --configuration Release --no-restore
 if %errorlevel% neq 0 (
     echo ERROR: Build failed
     pause
@@ -42,12 +56,12 @@ if %errorlevel% neq 0 (
 
 REM Publish as single-file executable with all dependencies included
 echo Publishing single-file executable with all dependencies...
-dotnet publish -c Release --self-contained true -r win-x64 -o ./.build ^
-    /p:PublishSingleFile=true ^
-    /p:IncludeNativeLibrariesForSelfExtract=true ^
-    /p:PublishTrimmed=false ^
-    /p:PublishReadyToRun=false ^
-    /p:DebugType=None
+dotnet publish AccountManager.csproj -c Release --self-contained true -r win-x64 -o ./.build ^
+    -p:PublishSingleFile=true ^
+    -p:IncludeNativeLibrariesForSelfExtract=true ^
+    -p:PublishTrimmed=false ^
+    -p:PublishReadyToRun=false ^
+    -p:DebugType=None
 if %errorlevel% neq 0 (
     echo ERROR: Publish failed
     pause

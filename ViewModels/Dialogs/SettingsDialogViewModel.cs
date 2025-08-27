@@ -72,6 +72,12 @@ namespace AccountManager.ViewModels
             set => _settingsService.ConfirmGroupDelete = value;
         }
 
+        public bool ConfirmArchiveAccount
+        {
+            get => _settingsService.ConfirmArchiveAccount;
+            set => _settingsService.ConfirmArchiveAccount = value;
+        }
+
         // Computed properties
         public bool ShowTrashRetention => EnableTrash && AutoEmptyTrash;
 

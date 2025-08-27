@@ -20,6 +20,7 @@ namespace AccountManager.Models
         private ObservableCollection<Account> _accounts = new();
         private DateTime _createdAt = DateTime.Now;
         private DateTime _lastModified = DateTime.Now;
+        private bool _isSelected = false;
 
         public string Id
         {
@@ -100,9 +101,22 @@ namespace AccountManager.Models
             set { SetProperty(ref _lastModified, value); }
         }
 
+        [JsonIgnore]
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set { SetProperty(ref _isSelected, value); }
+        }
+
         // Computed properties for UI
         [JsonIgnore]
         public int AccountCount => Accounts?.Count ?? 0;
+
+        [JsonIgnore]
+        public int ActiveAccountCount => Accounts?.Count(a => a.IsActive) ?? 0;
+
+        [JsonIgnore]
+        public int Count => ActiveAccountCount; // Alias for compatibility with SystemGroups binding
 
         [JsonIgnore]
         public int FavoriteCount => Accounts?.Count(a => a.IsFavorite) ?? 0;
@@ -273,6 +287,36 @@ namespace AccountManager.Models
             return !string.IsNullOrWhiteSpace(Name);
         }
 
+        /// <summary>
+        /// Reinitializes event handlers after JSON deserialization.
+        /// JSON deserialization bypasses property setters, so event handlers are not attached.
+        /// Also handles the case where JSON deserializes to List instead of ObservableCollection.
+        /// </summary>
+        public void ReinitializeAfterDeserialization()
+        {
+            // If accounts was deserialized as List instead of ObservableCollection, convert it
+            if (_accounts != null && !(_accounts is ObservableCollection<Account>))
+            {
+                var accountsList = _accounts.ToList();
+                _accounts = new ObservableCollection<Account>(accountsList);
+            }
+            
+            if (_accounts != null)
+            {
+                // Attach collection change handler
+                _accounts.CollectionChanged += Accounts_CollectionChanged;
+                
+                // Attach property change handlers for all accounts
+                foreach (var account in _accounts)
+                {
+                    if (account != null)
+                    {
+                        account.PropertyChanged += Account_PropertyChanged;
+                    }
+                }
+            }
+        }
+
         public bool HasChanges(AccountGroup other)
         {
             if (other == null) return true;
@@ -316,11 +360,21 @@ namespace AccountManager.Models
                 OnPropertyChanged(nameof(FavoriteAccounts));
                 OnPropertyChanged(nameof(GroupStatsText));
             }
+
+            // Refresh active count when account's trashed/archived status changes
+            if (e.PropertyName == nameof(Account.IsTrashed) || e.PropertyName == nameof(Account.IsArchived))
+            {
+                OnPropertyChanged(nameof(ActiveAccountCount));
+                OnPropertyChanged(nameof(Count));
+                OnPropertyChanged(nameof(GroupStatsText));
+            }
         }
 
         private void RefreshComputedProperties()
         {
             OnPropertyChanged(nameof(AccountCount));
+            OnPropertyChanged(nameof(ActiveAccountCount));
+            OnPropertyChanged(nameof(Count));
             OnPropertyChanged(nameof(FavoriteCount));
             OnPropertyChanged(nameof(AccountCountText));
             OnPropertyChanged(nameof(FavoriteCountText));

@@ -6,20 +6,244 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d">
 
-    <!-- Enhanced Grid Layout for Accounts -->
-    <ScrollViewer Margin="24,0,24,24" 
+    <!-- Enhanced Layout for Accounts - Grid and List Views -->
+    <ScrollViewer Margin="0,0,24,24" 
                   VerticalScrollBarVisibility="Auto"
                   Style="{StaticResource ModernScrollViewer}">
-        <ItemsControl ItemsSource="{Binding DisplayedAccounts}"
-                      ItemTemplate="{StaticResource AccountCardTemplate}">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <WrapPanel Orientation="Horizontal" 
-                               ItemWidth="250"
-                               ItemHeight="Auto"/>
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-        </ItemsControl>
+        <Grid>
+            <!-- Grid View (Box Mode) - Default View -->
+            <ItemsControl x:Name="GridViewControl"
+                          ItemsSource="{Binding DisplayedAccounts}"
+                          ItemTemplate="{StaticResource AccountCardTemplate}">
+                <ItemsControl.Style>
+                    <Style TargetType="ItemsControl">
+                        <Setter Property="Visibility" Value="Visible"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsListViewMode}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ItemsControl.Style>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" 
+                                   ItemWidth="250"
+                                   ItemHeight="Auto"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+            
+            <!-- List View -->
+            <ItemsControl x:Name="ListViewControl"
+                          ItemsSource="{Binding DisplayedAccounts}">
+                <ItemsControl.Style>
+                    <Style TargetType="ItemsControl">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsListViewMode}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ItemsControl.Style>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <!-- List Item Template -->
+                        <Border Background="{DynamicResource CardBackgroundColor}"
+                                
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Margin="6,0,0,8"
+                                Padding="16,12">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderHoverColor}"/>
+                                            <Setter Property="Cursor" Value="Hand"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <!-- Account Icon -->
+                                <Border Grid.Column="0"
+                                        Background="{StaticResource PrimaryColor}"
+                                        CornerRadius="8"
+                                        Width="40" Height="40"
+                                        Margin="0,0,16,0">
+                                    <materialDesign:PackIcon Kind="Account"
+                                                            Width="20" Height="20"
+                                                            Foreground="White"
+                                                            HorizontalAlignment="Center"
+                                                            VerticalAlignment="Center"/>
+                                </Border>
+                                
+                                <!-- Account Info -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Name}"
+                                              FontSize="14"
+                                              FontWeight="Regular"
+                                              Foreground="{DynamicResource TextPrimaryColor}"
+                                              TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding Email, TargetNullValue=''}"
+                                              FontSize="12"
+                                              FontWeight="Regular"
+                                              Foreground="{DynamicResource TextSecondaryColor}"
+                                              Margin="0,2,0,0"
+                                              Opacity="0.7"
+                                              TextTrimming="CharacterEllipsis">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Email}" Value="">
+                                                        <Setter Property="Text" Value="{Binding Username, TargetNullValue='example@email.com'}"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Email}" Value="{x:Null}">
+                                                        <Setter Property="Text" Value="{Binding Username, TargetNullValue='example@email.com'}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                                
+                                <!-- Action Buttons -->
+                                <StackPanel Grid.Column="2" 
+                                          Orientation="Horizontal" 
+                                          VerticalAlignment="Center">
+                                    <!-- Favorite Button -->
+                                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                                            Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}"
+                                            Width="32" Height="32"
+                                            Margin="4,0"
+                                            ToolTip="Toggle Favorite"
+                                            Visibility="{Binding ShowFavoriteIcon, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <materialDesign:PackIcon Width="16" Height="16">
+                                            <materialDesign:PackIcon.Style>
+                                                <Style TargetType="materialDesign:PackIcon">
+                                                    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryColor}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                                                            <Setter Property="Foreground" Value="#F59E0B"/>
+                                                            <Setter Property="Kind" Value="Star"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsFavorite}" Value="False">
+                                                            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryColor}"/>
+                                                            <Setter Property="Kind" Value="StarOutline"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </materialDesign:PackIcon.Style>
+                                        </materialDesign:PackIcon>
+                                    </Button>
+
+                                    <!-- Archive Button -->
+                                    <Button Width="32" Height="32" Margin="4,0">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignIconButton}">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Style.Triggers>
+                                                    <!-- Hide archive button when viewing trash -->
+                                                    <DataTrigger Binding="{Binding DataContext.IsViewingTrash, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsArchived}" Value="False">
+                                                        <Setter Property="ToolTip" Value="Archive Account"/>
+                                                        <Setter Property="Command" Value="{Binding DataContext.ArchiveAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsArchived}" Value="True">
+                                                        <Setter Property="ToolTip" Value="Restore Account"/>
+                                                        <Setter Property="Command" Value="{Binding DataContext.RestoreAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                        <Button.CommandParameter>
+                                            <Binding/>
+                                        </Button.CommandParameter>
+                                        <materialDesign:PackIcon Width="16" Height="16">
+                                            <materialDesign:PackIcon.Style>
+                                                <Style TargetType="materialDesign:PackIcon">
+                                                    <Setter Property="Kind" Value="ArchiveOutline"/>
+                                                    <Setter Property="Foreground" Value="#8B5CF6"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsArchived}" Value="True">
+                                                            <Setter Property="Kind" Value="ArchiveArrowUpOutline"/>
+                                                            <Setter Property="Foreground" Value="#10B981"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </materialDesign:PackIcon.Style>
+                                        </materialDesign:PackIcon>
+                                    </Button>
+
+                                    <!-- Restore Button - Only shown when viewing trash -->
+                                    <Button Command="{Binding DataContext.RestoreAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}"
+                                            Width="32" Height="32"
+                                            Margin="4,0"
+                                            ToolTip="Restore Account">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignIconButton}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <!-- Show restore button only when viewing trash -->
+                                                    <DataTrigger Binding="{Binding DataContext.IsViewingTrash, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                        <materialDesign:PackIcon Kind="Restore" 
+                                                                Foreground="#10B981" 
+                                                                Width="16" Height="16"/>
+                                    </Button>
+                                    
+                                    <!-- Edit Button -->
+                                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                                            Command="{Binding DataContext.EditAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}"
+                                            Width="32" Height="32"
+                                            Margin="4,0"
+                                            ToolTip="Edit Account">
+                                        <materialDesign:PackIcon Kind="PencilOutline" 
+                                                                Width="16" Height="16"
+                                                                Foreground="{DynamicResource TextSecondaryColor}"/>
+                                    </Button>
+                                    
+                                    <!-- Delete Button -->
+                                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                                            Command="{Binding DataContext.DeleteAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}"
+                                            Width="32" Height="32"
+                                            Margin="4,0"
+                                            ToolTip="Delete Account">
+                                        <materialDesign:PackIcon Kind="DeleteOutline" 
+                                                                Width="16" Height="16"
+                                                                Foreground="{DynamicResource DangerColor}"/>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Vertical"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+        </Grid>
     </ScrollViewer>
 
 </UserControl>

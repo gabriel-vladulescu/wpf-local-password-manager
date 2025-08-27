@@ -12,7 +12,6 @@ namespace AccountManager.ViewModels
 {
     public class SidebarViewModel : BaseViewModel
     {
-        private readonly JsonService _jsonService;
         private SystemGroup _selectedSystemGroup;
         private AccountGroup _selectedGroup;
 
@@ -26,6 +25,8 @@ namespace AccountManager.ViewModels
         public ObservableCollection<SystemGroup> SystemGroups { get; set; } = new();
         public ObservableCollection<AccountGroup> RegularGroups { get; set; } = new();
         public ObservableCollection<AccountGroup> AllGroups { get; set; } = new();
+
+        public ThemeService ThemeService => ThemeService.Instance;
 
         // Special collections for trash and archive
         public ObservableCollection<Account> TrashedAccounts { get; set; } = new();
@@ -75,9 +76,8 @@ namespace AccountManager.ViewModels
         public ICommand EmptyTrashCommand { get; private set; }
         public ICommand RestoreFromTrashCommand { get; private set; }
 
-        public SidebarViewModel(JsonService jsonService)
+        public SidebarViewModel()
         {
-            _jsonService = jsonService;
             InitializeCommands();
         }
 
@@ -99,20 +99,29 @@ namespace AccountManager.ViewModels
             TrashedAccounts.Clear();
             ArchivedAccounts.Clear();
 
-            foreach (var group in groups)
+            if (groups != null)
             {
-                AllGroups.Add(group);
-                RegularGroups.Add(group);
-
-                // Separate trashed and archived accounts
-                foreach (var account in group.Accounts.Where(a => a.IsTrashed).ToList())
+                foreach (var group in groups)
                 {
-                    TrashedAccounts.Add(account);
-                }
+                    AllGroups.Add(group);
+                    RegularGroups.Add(group);
 
-                foreach (var account in group.Accounts.Where(a => a.IsArchived).ToList())
-                {
-                    ArchivedAccounts.Add(account);
+                    if (group?.Accounts != null)
+                    {
+                        // Separate trashed and archived accounts
+                        var trashedAccounts = group.Accounts.Where(a => a.IsTrashed).ToList();
+                        var archivedAccounts = group.Accounts.Where(a => a.IsArchived).ToList();
+                        
+                        foreach (var account in trashedAccounts)
+                        {
+                            TrashedAccounts.Add(account);
+                        }
+
+                        foreach (var account in archivedAccounts)
+                        {
+                            ArchivedAccounts.Add(account);
+                        }
+                    }
                 }
             }
 
@@ -136,7 +145,7 @@ namespace AccountManager.ViewModels
             {
                 Id = "all",
                 Name = "All items",
-                Icon = "Diamond",
+                Icon = "ShieldKeyOutline",
                 ColorVariant = "#8B5CF6", // Purple
                 Count = TotalAccountsCount,
                 SortOrder = 0
@@ -151,7 +160,7 @@ namespace AccountManager.ViewModels
                 {
                     Id = "favorites",
                     Name = "Favorites",
-                    Icon = "Star",
+                    Icon = "StarOutline",
                     ColorVariant = "#F59E0B", // Orange
                     Count = FavoritesCount,
                     SortOrder = 1
@@ -167,7 +176,7 @@ namespace AccountManager.ViewModels
                 {
                     Id = "archive",
                     Name = "Archive",
-                    Icon = "Archive",
+                    Icon = "ArchiveOutline",
                     ColorVariant = "#8B5CF6", // Purple
                     Count = ArchivedAccountsCount,
                     SortOrder = 997
@@ -183,7 +192,7 @@ namespace AccountManager.ViewModels
                 {
                     Id = "trash",
                     Name = "Trash",
-                    Icon = "Delete",
+                    Icon = "DeleteOutline",
                     ColorVariant = "#6B7280", // Gray
                     Count = TrashedAccountsCount,
                     SortOrder = 999
@@ -586,8 +595,8 @@ namespace AccountManager.ViewModels
         {
             try
             {
-                var data = new AccountData { Groups = AllGroups.ToList() };
-                _jsonService.SaveData(data);
+                // Use DataManager to update Groups and save all data
+                Services.DataManager.Instance.UpdateGroups(AllGroups.ToList());
             }
             catch (Exception ex)
             {

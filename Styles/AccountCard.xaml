@@ -120,11 +120,7 @@
                     BorderBrush="{DynamicResource BorderColor}"
                     BorderThickness="1"
                     CornerRadius="16"
-                    UseLayoutRounding="True"
-                    RenderTransformOrigin="0.5,0.5">
-                <Border.RenderTransform>
-                    <ScaleTransform x:Name="CardScale" ScaleX="1" ScaleY="1"/>
-                </Border.RenderTransform>
+                    UseLayoutRounding="True">
             </Border>
             
             <!-- Main Card Content -->
@@ -137,16 +133,6 @@
                 </Border.InputBindings>
                 
                 <Grid>
-                    <!-- Ripple Overlay -->
-                    <materialDesign:Ripple Focusable="False"
-                                        HorizontalContentAlignment="Stretch"
-                                        VerticalContentAlignment="Stretch"
-                                        Feedback="#6366F1">
-                        <materialDesign:Ripple.Clip>
-                            <RectangleGeometry RadiusX="16" RadiusY="16"/>
-                        </materialDesign:Ripple.Clip>
-                    </materialDesign:Ripple>
-                    
                     <!-- Card Content -->
                     <Grid>
                         <Grid.RowDefinitions>
@@ -414,40 +400,66 @@
                                          Fill="{DynamicResource CardBackgroundColor}" 
                                          Margin="4,6"/>
                                 
-                                <!-- Archive Button -->
-<Button Width="50" Height="32" Margin="2">
-    <Button.Style>
-        <Style TargetType="Button" BasedOn="{StaticResource ActionMenuButton}">
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding IsArchived}" Value="False">
-                    <Setter Property="ToolTip" Value="Archive Account"/>
-                    <Setter Property="Command" Value="{Binding DataContext.ArchiveAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding IsArchived}" Value="True">
-                    <Setter Property="ToolTip" Value="Restore Account"/>
-                    <Setter Property="Command" Value="{Binding DataContext.RestoreAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-    </Button.Style>
-    <Button.CommandParameter>
-        <Binding/>
-    </Button.CommandParameter>
-    <materialDesign:PackIcon Width="16" Height="16">
-        <materialDesign:PackIcon.Style>
-            <Style TargetType="materialDesign:PackIcon">
-                <Setter Property="Kind" Value="Archive"/>
-                <Setter Property="Foreground" Value="#8B5CF6"/>
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding IsArchived}" Value="True">
-                        <Setter Property="Kind" Value="ArchiveArrowUp"/>
-                        <Setter Property="Foreground" Value="#10B981"/>
-                    </DataTrigger>
-                </Style.Triggers>
-            </Style>
-        </materialDesign:PackIcon.Style>
-    </materialDesign:PackIcon>
-</Button>
+                                <!-- Archive Button - Hidden when viewing trash -->
+                                <Button Width="50" Height="32" Margin="2">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource ActionMenuButton}">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Style.Triggers>
+                                                <!-- Hide archive button when viewing trash -->
+                                                <DataTrigger Binding="{Binding DataContext.IsViewingTrash, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsArchived}" Value="False">
+                                                    <Setter Property="ToolTip" Value="Archive Account"/>
+                                                    <Setter Property="Command" Value="{Binding DataContext.ArchiveAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsArchived}" Value="True">
+                                                    <Setter Property="ToolTip" Value="Restore Account"/>
+                                                    <Setter Property="Command" Value="{Binding DataContext.RestoreAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <Button.CommandParameter>
+                                        <Binding/>
+                                    </Button.CommandParameter>
+                                    <materialDesign:PackIcon Width="16" Height="16">
+                                        <materialDesign:PackIcon.Style>
+                                            <Style TargetType="materialDesign:PackIcon">
+                                                <Setter Property="Kind" Value="Archive"/>
+                                                <Setter Property="Foreground" Value="#8B5CF6"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsArchived}" Value="True">
+                                                        <Setter Property="Kind" Value="ArchiveArrowUp"/>
+                                                        <Setter Property="Foreground" Value="#10B981"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </materialDesign:PackIcon.Style>
+                                    </materialDesign:PackIcon>
+                                </Button>
+
+                                <!-- Restore Button - Only shown when viewing trash -->
+                                <Button Width="50" Height="32" Margin="2" 
+                                        ToolTip="Restore Account"
+                                        Command="{Binding DataContext.RestoreAccountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource ActionMenuButton}">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <!-- Show restore button only when viewing trash -->
+                                                <DataTrigger Binding="{Binding DataContext.IsViewingTrash, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <materialDesign:PackIcon Kind="Restore" 
+                                                           Foreground="#10B981" 
+                                                           Width="16" Height="16"/>
+                                </Button>
                                 <!-- Separator -->
                                 <Rectangle Width="1" 
                                          Fill="{DynamicResource CardBackgroundColor}" 
@@ -471,34 +483,16 @@
                 </Grid>
             </Border>
             
-            <!-- Hover/Animation Triggers - Only for card scaling -->
+            <!-- Hover/Animation Triggers - Only border color change -->
             <Grid.Triggers>
                 <EventTrigger RoutedEvent="MouseEnter">
                     <BeginStoryboard>
                         <Storyboard>
-                            <!-- Card Scale -->
-                            <DoubleAnimation Storyboard.TargetName="CardScale"
-                                        Storyboard.TargetProperty="ScaleX"
-                                        To="1.02"
-                                        Duration="0:0:0.2">
-                                <DoubleAnimation.EasingFunction>
-                                    <CubicEase EasingMode="EaseOut"/>
-                                </DoubleAnimation.EasingFunction>
-                            </DoubleAnimation>
-                            <DoubleAnimation Storyboard.TargetName="CardScale"
-                                        Storyboard.TargetProperty="ScaleY"
-                                        To="1.02"
-                                        Duration="0:0:0.2">
-                                <DoubleAnimation.EasingFunction>
-                                    <CubicEase EasingMode="EaseOut"/>
-                                </DoubleAnimation.EasingFunction>
-                            </DoubleAnimation>
-                            
                             <!-- Card Border -->
                             <ColorAnimation Storyboard.TargetName="CardBackground"
                                         Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
                                         To="#6366F1"
-                                        Duration="0:0:0.2"/>
+                                        Duration="0:0:0"/>
                         </Storyboard>
                     </BeginStoryboard>
                 </EventTrigger>
@@ -506,28 +500,10 @@
                 <EventTrigger RoutedEvent="MouseLeave">
                     <BeginStoryboard>
                         <Storyboard>
-                            <!-- Card Scale -->
-                            <DoubleAnimation Storyboard.TargetName="CardScale"
-                                        Storyboard.TargetProperty="ScaleX"
-                                        To="1"
-                                        Duration="0:0:0.3">
-                                <DoubleAnimation.EasingFunction>
-                                    <ElasticEase EasingMode="EaseOut" Oscillations="1" Springiness="4"/>
-                                </DoubleAnimation.EasingFunction>
-                            </DoubleAnimation>
-                            <DoubleAnimation Storyboard.TargetName="CardScale"
-                                        Storyboard.TargetProperty="ScaleY"
-                                        To="1"
-                                        Duration="0:0:0.3">
-                                <DoubleAnimation.EasingFunction>
-                                    <ElasticEase EasingMode="EaseOut" Oscillations="1" Springiness="4"/>
-                                </DoubleAnimation.EasingFunction>
-                            </DoubleAnimation>
-                            
                             <!-- Card Border -->
                             <ColorAnimation Storyboard.TargetName="CardBackground"
                                         Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
-                                        Duration="0:0:0.2"/>
+                                        Duration="0:0:0"/>
                         </Storyboard>
                     </BeginStoryboard>
                 </EventTrigger>

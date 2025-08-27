@@ -24,40 +24,67 @@
         </Style>
     </UserControl.Resources>
 
-    <StackPanel Margin="30,30,0,10"
-                Orientation="Horizontal" 
-                HorizontalAlignment="Left"
-                VerticalAlignment="Center"
-                Background="{DynamicResource SidebarColor}">
+    <Border Margin="20,24,20,20"
+            Background="Transparent"
+            CornerRadius="16"
+            Padding="16,14">
+        <StackPanel Orientation="Horizontal" 
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center">
 
-        <!-- Logo -->
-        <Border Width="34" Height="34"
-                CornerRadius="12"
-                VerticalAlignment="Center">
-            <Image Style="{StaticResource LogoImageStyle}"/>
-        </Border>
+            <!-- Enhanced Logo Container -->
+            <Border Width="40" Height="40"
+                    CornerRadius="14"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource PrimaryColor}">
+                <Border.Effect>
+                    <DropShadowEffect Color="#8B5CF6" 
+                                     Opacity="0.4" 
+                                     ShadowDepth="2" 
+                                     BlurRadius="8"/>
+                </Border.Effect>
+                <Image Style="{StaticResource LogoImageStyle}"
+                       Width="24" Height="24"/>
+            </Border>
 
-        <!-- App Title & Version -->
-        <StackPanel VerticalAlignment="Center" Margin="8,0,0,0">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="{DynamicResource AppTitle}"
-                           Foreground="{DynamicResource SidebarTextPrimaryColor}"
-                           FontSize="18" 
-                           FontWeight="Bold"
-                           VerticalAlignment="Center"/>
+            <!-- Modern App Title & Version -->
+            <StackPanel VerticalAlignment="Center" Margin="14,0,0,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{DynamicResource AppTitle}"
+                               Foreground="{DynamicResource SidebarTextPrimaryColor}"
+                               FontSize="19" 
+                               FontWeight="Bold"
+                               VerticalAlignment="Center"
+                               LineHeight="22"/>
 
-                <!-- Version Badge -->
-                <Border Background="{DynamicResource PrimaryColor}"
-                        CornerRadius="8"
-                        Padding="4,1"
-                        Margin="6,0,0,0"
-                        VerticalAlignment="Center">
-                    <TextBlock Text="{DynamicResource AppVersion}"
-                               Foreground="White"
-                               FontSize="9"
-                               FontWeight="SemiBold"/>
-                </Border>
+                    <!-- Enhanced Version Badge -->
+                    <Border Background="{DynamicResource PrimaryColor}"
+                            CornerRadius="10"
+                            Padding="8,3"
+                            Margin="10,0,0,0"
+                            VerticalAlignment="Center"
+                            Opacity="0.9">
+                        <Border.Effect>
+                            <DropShadowEffect Color="Black" 
+                                             Opacity="0.15" 
+                                             ShadowDepth="1" 
+                                             BlurRadius="4"/>
+                        </Border.Effect>
+                        <TextBlock Text="{DynamicResource AppVersion}"
+                                   Foreground="White"
+                                   FontSize="10"
+                                   FontWeight="SemiBold"/>
+                    </Border>
+                </StackPanel>
+                
+                <!-- Subtitle for modern feel -->
+                <TextBlock Text="Password Manager"
+                           Foreground="{DynamicResource SidebarTextSecondaryColor}"
+                           FontSize="12"
+                           FontWeight="Normal"
+                           Margin="0,2,0,0"
+                           Opacity="0.7"/>
             </StackPanel>
         </StackPanel>
-    </StackPanel>
+    </Border>
 </UserControl>

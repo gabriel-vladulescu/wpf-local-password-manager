@@ -16,12 +16,15 @@ namespace AccountManager.Config
             // Text colors
             public const string TextPrimary = "#F1F5F9";     // Main text
             public const string TextSecondary = "#94A3B8";   // Secondary text
+            public const string TextAccent = "#bdbdff";      // Accent text
             
             // Input specific colors
-            public const string InputBackground = "#334155";
+            public const string InputBackground = "#191926";
+            public const string InputBorder = "#38384c";
+            public const string InputBorderFocus = "#c5c4fe";
+            public const string InputPlaceholder = "#bab4d3";
             public const string InputLabelBackground = "#6366F1";
             public const string InputLabelText = "#FFFFFF";
-            public const string InputBorder = "#475569";
             public const string InputText = "#FFFFFF";
             
             // Sidebar specific
@@ -33,7 +36,17 @@ namespace AccountManager.Config
             // Special backgrounds
             public const string SearchBackground = "#334155";
             public const string EmptyStateBackground = "#334155";
+            public const string CardBackground = "#26263b";
             public const string CardBorderHover = "#6366F1";
+            
+            // UI State colors
+            public const string HoverBackground = "#23232e";
+            public const string SelectedBackground = "#302d45";
+            public const string GlowColor = "#c5c4fe";
+            
+            // Context Menu colors
+            public const string ContextMenuBackground = "#2a2839";
+            public const string ContextMenuBorder = "#3d3a4b";
         }
 
         // Light Theme Colors
@@ -47,10 +60,13 @@ namespace AccountManager.Config
             // Text colors
             public const string TextPrimary = "#1E293B";     // Main text
             public const string TextSecondary = "#64748B";   // Secondary text
-            
+            public const string TextAccent = "#4f14bd";      // Accent text
+
             // Input specific colors
             public const string InputBackground = "#F8FAFC";
             public const string InputBorder = "#E2E8F0";
+            public const string InputBorderFocus = "#6366F1";
+            public const string InputPlaceholder = "#94A3B8";
             public const string InputLabelBackground = "#6366F1";
             public const string InputLabelText = "#FFFFFF";
             public const string InputText = "#1E293B";
@@ -64,7 +80,17 @@ namespace AccountManager.Config
             // Special backgrounds
             public const string SearchBackground = "#F8FAFC";
             public const string EmptyStateBackground = "#F8FAFC";
+            public const string CardBackground = "#ffffffff";
             public const string CardBorderHover = "#6366F1";
+            
+            // UI State colors
+            public const string HoverBackground = "#F1F5F9";
+            public const string SelectedBackground = "#E2E8F0";
+            public const string GlowColor = "#6366F1";
+            
+            // Context Menu colors
+            public const string ContextMenuBackground = "#FFFFFF";
+            public const string ContextMenuBorder = "#E2E8F0";
         }
 
         // Common Colors (theme-independent)

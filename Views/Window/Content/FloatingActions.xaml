@@ -13,7 +13,7 @@
             VerticalAlignment="Bottom"
             Margin="0,0,32,32"
             ToolTip="Add New Account"
-            Visibility="{Binding IsAccountsPanelVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+            Visibility="{Binding ShowAddAccountButton, Converter={StaticResource BooleanToVisibilityConverter}}">
         <materialDesign:PackIcon Kind="Plus" 
                                 Foreground="White"
                                 Width="24" Height="24"/>

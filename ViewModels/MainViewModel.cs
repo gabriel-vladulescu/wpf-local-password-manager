@@ -12,13 +12,13 @@ namespace AccountManager.ViewModels
 {
     public class MainViewModel : BaseViewModel, IDisposable
     {
-        private readonly JsonService _jsonService;
         private string _searchText = "";
         private string _globalSearchText = "";
         private ObservableCollection<Account> _filteredAccounts = new();
         private ObservableCollection<Account> _globalSearchResults = new();
         private string _errorMessage = "";
         private bool _hasError = false;
+        private bool _isListViewMode = false;
 
         // Current selection state (managed by SidebarViewModel)
         private AccountGroup _currentGroup;
@@ -108,8 +108,14 @@ namespace AccountManager.ViewModels
         public bool IsViewingAll => _currentSystemGroup?.Id == "all";
         public bool IsViewingActiveAccounts => IsViewingAll || IsViewingFavorites || _currentGroup != null;
         public bool CanAddAccount => _currentGroup != null && !IsViewingSystemGroup;
-        public bool ShowAddAccountButton => CanAddAccount;
         public bool IsViewingSystemGroup => _currentSystemGroup != null;
+
+        // View Mode Properties
+        public bool IsListViewMode
+        {
+            get => _isListViewMode;
+            set => SetProperty(ref _isListViewMode, value);
+        }
 
         // Dynamic UI Content Properties
         public string BreadcrumbText
@@ -229,13 +235,12 @@ namespace AccountManager.ViewModels
 
         public MainViewModel()
         {
-            _jsonService = new JsonService();
-            SidebarViewModel = new SidebarViewModel(_jsonService);
+            SidebarViewModel = new SidebarViewModel();
 
             InitializeCommands();
+            LoadData(); // Load data FIRST before subscribing to events
             SubscribeToSidebarEvents();
             SubscribeToSettingsEvents();
-            LoadData();
         }
 
         private void InitializeCommands()
@@ -302,6 +307,7 @@ namespace AccountManager.ViewModels
             }
 
             UpdateGlobalSearchResults();
+            UpdateFilteredAccounts(); // This ensures filtered accounts reflect group changes
             UpdateDisplayedAccounts();
             RefreshUIAfterSelection();
         }
@@ -336,7 +342,6 @@ namespace AccountManager.ViewModels
                 nameof(IsViewingAll),
                 nameof(IsViewingActiveAccounts),
                 nameof(CanAddAccount),           
-                nameof(ShowAddAccountButton),   
                 nameof(IsViewingSystemGroup)
             );
         }
@@ -348,11 +353,15 @@ namespace AccountManager.ViewModels
                 HasError = false;
                 ErrorMessage = "";
 
-                var data = _jsonService.LoadData();
+                var data = Services.DataManager.Instance.CurrentData;
                 Groups.Clear();
-                foreach (var group in data.Groups)
+                
+                if (data?.Groups != null)
                 {
-                    Groups.Add(group);
+                    foreach (var group in data.Groups)
+                    {
+                        Groups.Add(group);
+                    }
                 }
 
                 // Load groups into sidebar
@@ -455,23 +464,8 @@ namespace AccountManager.ViewModels
 
             try
             {
-                // If trash is enabled, move to trash instead of permanent deletion
-                if (SettingsService.Instance.EnableTrash)
-                {
-                    if (SettingsService.Instance.ConfirmAccountDelete)
-                    {
-                        var confirmDialog = new ConfirmationDialog();
-                        confirmDialog.SetupForAccountTrash(account);
-
-                        var result = await DialogService.ShowDialogAsync(confirmDialog);
-
-                        if (result != true || !confirmDialog.ViewModel.Result)
-                            return;
-                    }
-
-                    SidebarViewModel.MoveAccountToTrash(account);
-                }
-                else
+                // If we're viewing trash, or trash is disabled, permanently delete
+                if (IsViewingTrash || !SettingsService.Instance.EnableTrash)
                 {
                     // Permanent deletion
                     if (SettingsService.Instance.ConfirmAccountDelete)
@@ -485,8 +479,36 @@ namespace AccountManager.ViewModels
                             return;
                     }
 
-                    containingGroup.Accounts.Remove(account);
-                    SaveData();
+                    if (IsViewingTrash)
+                    {
+                        // Remove from trash and delete permanently
+                        containingGroup.Accounts.Remove(account);
+                        SidebarViewModel.TrashedAccounts.Remove(account);
+                        SaveData();
+                        SidebarViewModel.UpdateCounts();
+                    }
+                    else
+                    {
+                        // Direct permanent deletion (trash is disabled)
+                        containingGroup.Accounts.Remove(account);
+                        SaveData();
+                    }
+                }
+                else
+                {
+                    // Move to trash
+                    if (SettingsService.Instance.ConfirmAccountDelete)
+                    {
+                        var confirmDialog = new ConfirmationDialog();
+                        confirmDialog.SetupForAccountTrash(account);
+
+                        var result = await DialogService.ShowDialogAsync(confirmDialog);
+
+                        if (result != true || !confirmDialog.ViewModel.Result)
+                            return;
+                    }
+
+                    SidebarViewModel.MoveAccountToTrash(account);
                 }
 
                 NotifyDataChanged();
@@ -518,7 +540,7 @@ namespace AccountManager.ViewModels
             }
         }
 
-        private void ArchiveAccount(object parameter)
+        private async void ArchiveAccount(object parameter)
         {
             if (parameter is not Account account) return;
 
@@ -531,6 +553,17 @@ namespace AccountManager.ViewModels
 
             try
             {
+                if (SettingsService.Instance.ConfirmArchiveAccount)
+                {
+                    var confirmDialog = new ConfirmationDialog();
+                    confirmDialog.SetupForAccountArchive(account);
+
+                    var result = await DialogService.ShowDialogAsync(confirmDialog);
+
+                    if (result != true || !confirmDialog.ViewModel.Result)
+                        return;
+                }
+
                 SidebarViewModel.MoveAccountToArchive(account);
                 NotifyDataChanged();
                 UpdateFilteredAccounts();
@@ -573,8 +606,8 @@ namespace AccountManager.ViewModels
         {
             try
             {
-                var data = new AccountData { Groups = Groups.ToList() };
-                _jsonService.SaveData(data);
+                // Use DataManager to update Groups and save all data
+                Services.DataManager.Instance.UpdateGroups(Groups.ToList());
             }
             catch (Exception ex)
             {
@@ -645,16 +678,15 @@ namespace AccountManager.ViewModels
         // Search Operations
         private void UpdateFilteredAccounts()
         {
-            FilteredAccounts.Clear();
-
             ObservableCollection<Account> sourceAccounts = new();
 
             if (_currentSystemGroup?.Id == "all")
             {
                 // Get all active accounts from all groups (not trashed or archived)
-                sourceAccounts = new ObservableCollection<Account>(
-                    Groups.SelectMany(g => g.Accounts).Where(a => a.IsActive)
-                );
+                var allActiveAccounts = Groups?.SelectMany(g => g?.Accounts ?? new ObservableCollection<Account>())
+                                              .Where(a => a?.IsActive == true)
+                                              .ToArray() ?? new Account[0];
+                sourceAccounts = new ObservableCollection<Account>(allActiveAccounts);
             }
             else if (_currentSystemGroup?.Id == "favorites")
             {
@@ -697,6 +729,8 @@ namespace AccountManager.ViewModels
                     (a.Website?.ToLower().Contains(search) ?? false));
             }
 
+            // Clear and repopulate FilteredAccounts to ensure proper UI refresh
+            FilteredAccounts.Clear();
             foreach (var account in accounts)
             {
                 FilteredAccounts.Add(account);

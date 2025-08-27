@@ -18,6 +18,8 @@
                             <MultiDataTrigger.Conditions>
                                 <Condition Binding="{Binding DisplayedAccounts.Count}" Value="0"/>
                                 <Condition Binding="{Binding IsAccountsPanelVisible}" Value="True"/>
+                                <Condition Binding="{Binding IsNoGroupsStateVisible}" Value="False"/>
+                                <Condition Binding="{Binding IsEmptyStateVisible}" Value="False"/>
                             </MultiDataTrigger.Conditions>
                             <Setter Property="Visibility" Value="Visible"/>
                         </MultiDataTrigger>
@@ -25,46 +27,65 @@
                 </Style>
             </StackPanel.Style>
             
-            <Border Background="{DynamicResource EmptyStateBackgroundColor}" 
+            <Border Background="{DynamicResource SidebarColor}" 
                     Width="120" Height="120" 
                     CornerRadius="60"
                     HorizontalAlignment="Center">
                 <materialDesign:PackIcon Kind="{Binding EmptyStateIcon}" 
                                         Width="60" Height="60" 
-                                        Foreground="{DynamicResource TextSecondaryColor}"
+                                        Foreground="{DynamicResource SidebarTextSecondaryColor}"
                                         Opacity="0.5"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"/>
             </Border>
             <TextBlock Text="{Binding EmptyStateTitle}" 
-                       FontSize="20" 
-                       FontWeight="SemiBold"
-                       Foreground="{DynamicResource TextSecondaryColor}"
+                       FontSize="19" 
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource SidebarTextSecondaryColor}"
                        HorizontalAlignment="Center"
-                       Margin="0,20,0,8"/>
+                       LineHeight="22"
+                       Margin="0,20,0,6"/>
             <TextBlock Text="{Binding EmptyStateMessage}" 
-                       Foreground="{DynamicResource TextSecondaryColor}"
-                       Opacity="0.8"
+                       FontSize="12"
+                       FontWeight="Regular"
+                       Foreground="{DynamicResource SidebarTextSecondaryColor}"
+                       Opacity="0.7"
                        HorizontalAlignment="Center"/>
+                       
+            <!-- Add Account Button - Only for regular groups -->
+            <Button Command="{Binding AddAccountCommand}"
+                    Margin="0,24,0,0"
+                    Height="40"
+                    MinWidth="140"
+                    HorizontalAlignment="Center">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <!-- Only show for regular groups (not system groups) -->
+                            <DataTrigger Binding="{Binding IsViewingSystemGroup}" Value="False">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <materialDesign:PackIcon Kind="Plus" 
+                                            Width="16" Height="16"
+                                            Foreground="White"
+                                            VerticalAlignment="Center"
+                                            Margin="0,0,8,0"/>
+                    <TextBlock Text="Add Account"
+                              Foreground="White"
+                              VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
         </StackPanel>
 
-        <!-- No Group Selected -->
+        <!-- No Group Selected (Only when groups exist) -->
         <StackPanel VerticalAlignment="Center" 
-                    HorizontalAlignment="Center">
-            <StackPanel.Style>
-                <Style TargetType="StackPanel">
-                    <Setter Property="Visibility" Value="Collapsed"/>
-                    <Style.Triggers>
-                        <MultiDataTrigger>
-                            <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding IsEmptyStateVisible}" Value="True"/>
-                                <Condition Binding="{Binding IsNoGroupsStateVisible}" Value="False"/>
-                            </MultiDataTrigger.Conditions>
-                            <Setter Property="Visibility" Value="Visible"/>
-                        </MultiDataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </StackPanel.Style>
+                    HorizontalAlignment="Center"
+                    Visibility="{Binding IsEmptyStateVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
             
             <Border Background="{DynamicResource EmptyStateBackgroundColor}" 
                     Width="140" Height="140" 
@@ -77,15 +98,17 @@
                                         VerticalAlignment="Center"/>
             </Border>
             <TextBlock Text="Select a group" 
-                       FontSize="24" 
+                       FontSize="19" 
                        FontWeight="Bold"
                        Foreground="{DynamicResource TextSecondaryColor}"
                        HorizontalAlignment="Center"
-                       Margin="0,24,0,8"/>
+                       LineHeight="22"
+                       Margin="0,24,0,6"/>
             <TextBlock Text="Choose a group from the sidebar to view your accounts" 
+                       FontSize="12"
+                       FontWeight="Regular"
                        Foreground="{DynamicResource TextSecondaryColor}"
-                       FontSize="14"
-                       Opacity="0.8"
+                       Opacity="0.7"
                        HorizontalAlignment="Center"
                        TextAlignment="Center"/>
         </StackPanel>
@@ -105,22 +128,24 @@
                                         VerticalAlignment="Center"/>
             </Border>
             <TextBlock Text="Create your first group" 
-                       FontSize="24" 
+                       FontSize="19" 
                        FontWeight="Bold"
                        Foreground="{DynamicResource TextSecondaryColor}"
                        HorizontalAlignment="Center"
-                       Margin="0,24,0,8"/>
+                       LineHeight="22"
+                       Margin="0,24,0,6"/>
             <TextBlock Text="Groups help you organize your accounts by category" 
+                       FontSize="12"
+                       FontWeight="Regular"
                        Foreground="{DynamicResource TextSecondaryColor}"
-                       FontSize="14"
-                       Opacity="0.8"
+                       Opacity="0.7"
                        HorizontalAlignment="Center"
                        TextAlignment="Center"/>
             <Button Content="Get Started" 
                     Background="{StaticResource PrimaryColor}"
                     Foreground="White"
                     BorderThickness="0"
-                    Command="{Binding AddGroupCommand}"
+                    Command="{Binding SidebarViewModel.AddGroupCommand}"
                     Margin="0,24,0,0"
                     Height="40"
                     Padding="20,0">

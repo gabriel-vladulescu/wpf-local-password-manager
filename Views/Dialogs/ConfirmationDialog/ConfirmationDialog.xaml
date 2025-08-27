@@ -6,7 +6,7 @@
 
     <Border Style="{StaticResource GlassPanel}" 
             MinWidth="400" MaxWidth="500"
-            Background="{DynamicResource CardBackgroundColor}">
+            Background="{DynamicResource MainBackgroundColor}">
         <Grid Margin="24">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>

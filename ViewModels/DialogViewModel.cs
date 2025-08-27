@@ -86,7 +86,7 @@ namespace AccountManager.ViewModels
             {
                 Name = "",
                 ColorVariant = "#a779ff",
-                Icon = "Folder"
+                Icon = "FolderOutline"
             };
         }
 

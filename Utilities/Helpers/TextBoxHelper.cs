@@ -56,5 +56,18 @@ namespace AccountManager.Utilities.Helpers
 
         public static void SetMaxChars(DependencyObject obj, int value) => 
             obj.SetValue(MaxCharsProperty, value);
+
+        public static readonly DependencyProperty RequiredProperty =
+            DependencyProperty.RegisterAttached(
+                "Required",
+                typeof(bool),
+                typeof(TextBoxHelper),
+                new FrameworkPropertyMetadata(false));
+
+        public static bool GetRequired(DependencyObject obj) =>
+            (bool)obj.GetValue(RequiredProperty);
+
+        public static void SetRequired(DependencyObject obj, bool value) =>
+            obj.SetValue(RequiredProperty, value);
     }
 }

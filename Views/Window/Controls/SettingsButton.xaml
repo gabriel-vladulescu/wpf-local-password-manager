@@ -6,12 +6,14 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d">
 
-    <!-- Settings Button -->
+    <!-- Settings Button - Optimized for TopBar -->
     <Button Style="{StaticResource MaterialDesignIconButton}"
-            Click="SettingsButton_Click">
+            Click="SettingsButton_Click"
+            Width="32" Height="32"
+            ToolTip="Settings">
         <materialDesign:PackIcon Kind="Cog" 
                                 Foreground="{DynamicResource TextPrimaryColor}" 
-                                Width="20" Height="20"/>
+                                Width="18" Height="18"/>
     </Button>
 
 </UserControl>

@@ -362,7 +362,7 @@ namespace AccountManager.Utilities.Converters
 
             if (values[0] is int length && TryParseMax(values[1], out int max))
             {
-                return length > max;
+                return max > 0 && length > max;
             }
 
             return false;

@@ -57,8 +57,15 @@ namespace AccountManager.Services
                 
                 var data = JsonSerializer.Deserialize<AccountData>(json, options);
                 
+                // Handle migration from older format that might not have Settings/Theme
+                if (data != null)
+                {
+                    data.Settings ??= new AppSettings();
+                    data.Theme ??= new ThemeSettings();
+                    data.Validate(); // This will ensure Settings and Theme are initialized
+                }
+                
                 System.Diagnostics.Debug.WriteLine($"Data loaded successfully from {DataFileName}");
-                System.Diagnostics.Debug.WriteLine($"Loaded {data?.Groups?.Count ?? 0} groups");
                 
                 return data ?? new AccountData();
             }

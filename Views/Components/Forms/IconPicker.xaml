@@ -72,13 +72,37 @@
 
     <!-- Icon Picker Container -->
     <StackPanel>
+        <!-- Refresh Button -->
+        <Button Style="{StaticResource MaterialDesignFloatingActionButton}" Width="28" Height="28"
+        ToolTip="Refresh Icons"
+        Click="RefreshIcons_Click"
+        Background="Transparent"
+        BorderBrush="Transparent"
+        Padding="0"
+        HorizontalAlignment="Left"
+        VerticalAlignment="Center"
+        Margin="100,-54,0,0">
+            <Border Background="{DynamicResource InputBackgroundColor}" 
+            CornerRadius="16"
+            Width="28" Height="28"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Opacity="0.7">
+                <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20"
+                                 Foreground="#879f74"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"/>
+            </Border>
+        </Button>
+
+        <!-- Icon Picker ListBox -->
         <ListBox ItemsSource="{Binding Icons, ElementName=SourceElement}"
-                 SelectedValuePath="Value"
-                 SelectedValue="{Binding SelectedIcon, ElementName=SourceElement, Mode=TwoWay}"
-                 ItemContainerStyle="{StaticResource IconSelectionItemStyle}"
-                 HorizontalAlignment="Center"
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                 BorderThickness="0">
+                SelectedValuePath="Value"
+                SelectedValue="{Binding SelectedIcon, ElementName=SourceElement, Mode=TwoWay}"
+                ItemContainerStyle="{StaticResource IconSelectionItemStyle}"
+                HorizontalAlignment="Center"
+                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                BorderThickness="0">
 
             <ListBox.ItemsPanel>
                 <ItemsPanelTemplate>

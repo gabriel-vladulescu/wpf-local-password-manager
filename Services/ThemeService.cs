@@ -1,11 +1,10 @@
 using System;
 using System.ComponentModel;
-using System.IO;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 using System.Windows;
 using MaterialDesignThemes.Wpf;
 using AccountManager.Config;
+using AccountManager.Models;
 
 namespace AccountManager.Services
 {
@@ -18,20 +17,26 @@ namespace AccountManager.Services
     public class ThemeService : INotifyPropertyChanged
     {
         private static ThemeService _instance;
-        private const string SettingsFileName = "settings.json";
-        private AppTheme _currentTheme = AppTheme.Light;
+        private readonly DataManager _dataManager;
         private readonly PaletteHelper _paletteHelper;
 
         public static ThemeService Instance => _instance ??= new ThemeService();
 
         public AppTheme CurrentTheme
         {
-            get => _currentTheme;
+            get
+            {
+                if (_dataManager.CurrentData?.Theme?.CurrentTheme != null && Enum.TryParse<AppTheme>(_dataManager.CurrentData.Theme.CurrentTheme, out var theme))
+                {
+                    return theme;
+                }
+                return AppTheme.Light; // Default
+            }
             private set
             {
-                if (_currentTheme != value)
+                if (_dataManager.CurrentData?.Theme != null && _dataManager.CurrentData.Theme.CurrentTheme != value.ToString())
                 {
-                    _currentTheme = value;
+                    _dataManager.CurrentData.Theme.CurrentTheme = value.ToString();
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(IsDarkMode));
                     OnPropertyChanged(nameof(ThemeDisplayName));
@@ -44,6 +49,7 @@ namespace AccountManager.Services
 
         private ThemeService()
         {
+            _dataManager = DataManager.Instance;
             _paletteHelper = new PaletteHelper();
             LoadThemeFromSettings();
         }
@@ -135,11 +141,12 @@ namespace AccountManager.Services
                 app.Resources["AppBarBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Dark.AppBarBackgroundColor);
 
                 app.Resources["MainBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Dark.Background);
-                app.Resources["CardBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Dark.Surface);
+                app.Resources["CardBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Dark.CardBackground);
                 app.Resources["CardBorderColor"] = ColorConstants.ToBrush(ColorConstants.Dark.Border);
                 app.Resources["CardBorderHoverColor"] = ColorConstants.ToBrush(ColorConstants.Dark.CardBorderHover);
                 app.Resources["TextPrimaryColor"] = ColorConstants.ToBrush(ColorConstants.Dark.TextPrimary);
                 app.Resources["TextSecondaryColor"] = ColorConstants.ToBrush(ColorConstants.Dark.TextSecondary);
+                app.Resources["TextAccentColor"] = ColorConstants.ToBrush(ColorConstants.Dark.TextAccent);
                 app.Resources["BorderColor"] = ColorConstants.ToBrush(ColorConstants.Dark.Border);
                 app.Resources["InputBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Dark.InputBackground);
                 app.Resources["InputLabelBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Dark.InputLabelBackground);
@@ -154,8 +161,17 @@ namespace AccountManager.Services
                 // Custom input brushes for dark theme
                 app.Resources["InputBackgroundBrush"] = ColorConstants.ToBrush(ColorConstants.Dark.InputBackground);
                 app.Resources["InputBorderBrush"] = ColorConstants.ToBrush(ColorConstants.Dark.InputBorder);
+                app.Resources["InputBorderFocusBrush"] = ColorConstants.ToBrush(ColorConstants.Dark.InputBorderFocus);
+                app.Resources["InputPlaceholderBrush"] = ColorConstants.ToBrush(ColorConstants.Dark.InputPlaceholder);
                 app.Resources["InputTextBrush"] = ColorConstants.ToBrush(ColorConstants.Dark.InputText);
                 app.Resources["InputFocusBrush"] = ColorConstants.ToBrush(ColorConstants.Common.Primary);
+                
+                // UI State colors for dark theme
+                app.Resources["HoverBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Dark.HoverBackground);
+                app.Resources["SelectedBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Dark.SelectedBackground);
+                app.Resources["GlowColor"] = ColorConstants.ToBrush(ColorConstants.Dark.GlowColor);
+                app.Resources["ContextMenuBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Dark.ContextMenuBackground);
+                app.Resources["ContextMenuBorderColor"] = ColorConstants.ToBrush(ColorConstants.Dark.ContextMenuBorder);
             }
             else
             {
@@ -165,11 +181,12 @@ namespace AccountManager.Services
 
 
                 app.Resources["MainBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Light.Background);
-                app.Resources["CardBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Light.Surface);
+                app.Resources["CardBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Light.CardBackground);
                 app.Resources["CardBorderColor"] = ColorConstants.ToBrush(ColorConstants.Light.Border);
                 app.Resources["CardBorderHoverColor"] = ColorConstants.ToBrush(ColorConstants.Light.CardBorderHover);
                 app.Resources["TextPrimaryColor"] = ColorConstants.ToBrush(ColorConstants.Light.TextPrimary);
                 app.Resources["TextSecondaryColor"] = ColorConstants.ToBrush(ColorConstants.Light.TextSecondary);
+                app.Resources["TextAccentColor"] = ColorConstants.ToBrush(ColorConstants.Light.TextAccent);
                 app.Resources["BorderColor"] = ColorConstants.ToBrush(ColorConstants.Light.Border);
                 app.Resources["InputBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Light.InputBackground);
                 app.Resources["InputLabelBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Light.InputLabelBackground);
@@ -184,8 +201,17 @@ namespace AccountManager.Services
                 // Custom input brushes for light theme
                 app.Resources["InputBackgroundBrush"] = ColorConstants.ToBrush(ColorConstants.Light.InputBackground);
                 app.Resources["InputBorderBrush"] = ColorConstants.ToBrush(ColorConstants.Light.InputBorder);
+                app.Resources["InputBorderFocusBrush"] = ColorConstants.ToBrush(ColorConstants.Light.InputBorderFocus);
+                app.Resources["InputPlaceholderBrush"] = ColorConstants.ToBrush(ColorConstants.Light.InputPlaceholder);
                 app.Resources["InputTextBrush"] = ColorConstants.ToBrush(ColorConstants.Light.InputText);
                 app.Resources["InputFocusBrush"] = ColorConstants.ToBrush(ColorConstants.Common.Primary);
+                
+                // UI State colors for light theme
+                app.Resources["HoverBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Light.HoverBackground);
+                app.Resources["SelectedBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Light.SelectedBackground);
+                app.Resources["GlowColor"] = ColorConstants.ToBrush(ColorConstants.Light.GlowColor);
+                app.Resources["ContextMenuBackgroundColor"] = ColorConstants.ToBrush(ColorConstants.Light.ContextMenuBackground);
+                app.Resources["ContextMenuBorderColor"] = ColorConstants.ToBrush(ColorConstants.Light.ContextMenuBorder);
             }
 
             // Common colors that don't change
@@ -200,21 +226,14 @@ namespace AccountManager.Services
         {
             try
             {
-                if (File.Exists(SettingsFileName))
-                {
-                    var json = File.ReadAllText(SettingsFileName);
-                    var settings = JsonSerializer.Deserialize<ThemeSettings>(json);
-                    if (settings != null && Enum.TryParse<AppTheme>(settings.Theme, out var theme))
-                    {
-                        CurrentTheme = theme;
-                    }
-                }
+                // Ensure theme settings are initialized in the shared data
+                _dataManager.CurrentData.Theme ??= new ThemeSettings();
+                
+                System.Diagnostics.Debug.WriteLine($"Theme loaded from shared DataManager: {CurrentTheme}");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error loading theme settings: {ex.Message}");
-                // Default to light theme if loading fails
-                CurrentTheme = AppTheme.Light;
             }
             
             // Apply the loaded theme
@@ -225,10 +244,8 @@ namespace AccountManager.Services
         {
             try
             {
-                var settings = new ThemeSettings { Theme = CurrentTheme.ToString() };
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                var json = JsonSerializer.Serialize(settings, options);
-                File.WriteAllText(SettingsFileName, json);
+                _dataManager.SaveCurrentData();
+                System.Diagnostics.Debug.WriteLine($"Theme saved via DataManager: {CurrentTheme}");
             }
             catch (Exception ex)
             {
@@ -242,11 +259,5 @@ namespace AccountManager.Services
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-    }
-
-    // Separate settings class for theme-specific settings
-    internal class ThemeSettings
-    {
-        public string Theme { get; set; } = "Light";
     }
 }

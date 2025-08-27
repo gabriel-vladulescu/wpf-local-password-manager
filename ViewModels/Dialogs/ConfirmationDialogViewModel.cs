@@ -137,32 +137,60 @@ namespace AccountManager.ViewModels
         {
             Title = "Move to Trash";
             Message = $"Move '{account.Name}' to trash?";
+            Icon = "Delete";
+            IconColor = "#F59E0B"; // Orange
             ConfirmText = "Move to Trash";
             CancelText = "Cancel";
+            ShowInput = false;
+            RequireConfirmation = false;
         }
 
         public void SetupForEmptyTrash(int itemCount)
         {
             Title = "Empty Trash";
-            Message = $"Delete {itemCount} items permanently?";
+            Message = $"Delete {itemCount} items permanently? This action cannot be undone.";
+            Icon = "Delete";
+            IconColor = "#EF4444"; // Red
             ConfirmText = "Empty Trash";
             CancelText = "Cancel";
+            ShowInput = false;
+            RequireConfirmation = false;
         }
 
         public void SetupForGroupDelete(AccountGroup group)
         {
             Title = "Delete Group";
-            Message = $"Delete '{group.Name}'?";
+            Message = $"Delete '{group.Name}' and all its accounts?";
+            Icon = "Delete";
+            IconColor = "#EF4444"; // Red
             ConfirmText = "Delete";
             CancelText = "Cancel";
+            ShowInput = false;
+            RequireConfirmation = false;
         }
 
         public void SetupForAccountDelete(Account account)
         {
             Title = "Delete Account";
-            Message = $"Delete '{account.Name}'?";
+            Message = $"Delete '{account.Name}' permanently? This action cannot be undone.";
+            Icon = "Delete";
+            IconColor = "#EF4444"; // Red
             ConfirmText = "Delete";
             CancelText = "Cancel";
+            ShowInput = false;
+            RequireConfirmation = false;
+        }
+
+        public void SetupForAccountArchive(Account account)
+        {
+            Title = "Archive Account";
+            Message = $"Archive '{account.Name}'? It will be moved to the archive section.";
+            Icon = "Archive";
+            IconColor = "#8B5CF6"; // Purple
+            ConfirmText = "Archive";
+            CancelText = "Cancel";
+            ShowInput = false;
+            RequireConfirmation = false;
         }
 
         public void SetupForGenericAction(string title, string message, string confirmText = "Confirm")
@@ -175,6 +203,8 @@ namespace AccountManager.ViewModels
             CancelText = "Cancel";
             ShowInput = false;
             RequireConfirmation = false;
+            InputText = "";
+            ConfirmationText = "";
         }
 
         public void SetupForTextInput(string title, string message, string hint, string confirmText = "OK")
@@ -188,6 +218,8 @@ namespace AccountManager.ViewModels
             CancelText = "Cancel";
             ShowInput = true;
             RequireConfirmation = false;
+            InputText = "";
+            ConfirmationText = "";
         }
 
         private void Confirm(object parameter)

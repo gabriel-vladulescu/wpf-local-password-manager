@@ -255,8 +255,9 @@ namespace AccountManager.Models
         // Validation method
         public bool IsValid()
         {
-            return !string.IsNullOrWhiteSpace(Name) && 
-                   (!string.IsNullOrWhiteSpace(Username) || !string.IsNullOrWhiteSpace(Email));
+            // An account is valid if it has a non-empty name
+            // Username and Email are optional fields
+            return !string.IsNullOrWhiteSpace(Name);
         }
 
         // Create a copy of the account

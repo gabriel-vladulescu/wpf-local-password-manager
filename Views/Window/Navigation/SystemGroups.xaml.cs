@@ -59,8 +59,8 @@ namespace AccountManager.Views.Window.Navigation
                 // Create the context menu programmatically
                 var contextMenu = new ContextMenu
                 {
-                    Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#2a2839")),
-                    BorderBrush = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#3d3a4b")),
+                    Background = (System.Windows.Media.Brush)FindResource("ContextMenuBackgroundColor"),
+                    BorderBrush = (System.Windows.Media.Brush)FindResource("ContextMenuBorderColor"),
                     BorderThickness = new Thickness(1)
                 };
 
@@ -70,15 +70,14 @@ namespace AccountManager.Views.Window.Navigation
                     Header = "Edit",
                     Command = sidebarViewModel.EditGroupCommand,
                     CommandParameter = groupItem,
-                    Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#2a2839")),
-                    Foreground = (System.Windows.Media.Brush)FindResource("SidebarTextPrimaryColor")
+                    Style = (Style)FindResource(typeof(MenuItem))
                 };
                 
                 // Edit icon
                 var editIcon = new MaterialDesignThemes.Wpf.PackIcon
                 {
-                    Kind = MaterialDesignThemes.Wpf.PackIconKind.Pencil,
-                    Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#bfb9d8")),
+                    Kind = MaterialDesignThemes.Wpf.PackIconKind.PencilOutline,
+                    Foreground = (System.Windows.Media.Brush)FindResource("SidebarTextPrimaryColor"),
                     Width = 16,
                     Height = 16
                 };
@@ -90,15 +89,14 @@ namespace AccountManager.Views.Window.Navigation
                     Header = "Delete",
                     Command = sidebarViewModel.DeleteGroupCommand,
                     CommandParameter = groupItem,
-                    Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#2a2839")),
-                    Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#f08fa4"))
+                    Style = (Style)FindResource(typeof(MenuItem))
                 };
                 
                 // Delete icon
                 var deleteIcon = new MaterialDesignThemes.Wpf.PackIcon
                 {
-                    Kind = MaterialDesignThemes.Wpf.PackIconKind.Delete,
-                    Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#f08fa4")),
+                    Kind = MaterialDesignThemes.Wpf.PackIconKind.DeleteOutline,
+                    Foreground = (System.Windows.Media.Brush)FindResource("SidebarTextPrimaryColor"),
                     Width = 16,
                     Height = 16
                 };

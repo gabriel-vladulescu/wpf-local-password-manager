@@ -6,7 +6,7 @@
 
     <Border Style="{StaticResource GlassPanel}" 
             MinWidth="500" MaxWidth="500" MaxHeight="600"
-            Background="{DynamicResource CardBackgroundColor}">
+            Background="{DynamicResource MainBackgroundColor}">
         <Grid Margin="24">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -261,29 +261,6 @@
                              Foreground="{DynamicResource TextPrimaryColor}"
                              Margin="0,20,0,12"/>
                     
-                    <!-- Confirm Account Delete Toggle -->
-                    <Grid Margin="0,0,0,16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="Confirm Account Deletion" 
-                                     FontWeight="SemiBold"
-                                     Foreground="{DynamicResource TextPrimaryColor}"
-                                     FontSize="14"/>
-                            <TextBlock Text="Show confirmation dialog when deleting accounts" 
-                                     Foreground="{DynamicResource TextSecondaryColor}"
-                                     FontSize="12"
-                                     Margin="0,2,0,0"/>
-                        </StackPanel>
-                        
-                        <ToggleButton Grid.Column="1" 
-                                    Style="{StaticResource MaterialDesignSwitchToggleButton}"
-                                    IsChecked="{Binding ConfirmAccountDelete}"/>
-                    </Grid>
-                    
                     <!-- Confirm Group Delete Toggle -->
                     <Grid Margin="0,0,0,16">
                         <Grid.ColumnDefinitions>
@@ -305,6 +282,52 @@
                         <ToggleButton Grid.Column="1" 
                                     Style="{StaticResource MaterialDesignSwitchToggleButton}"
                                     IsChecked="{Binding ConfirmGroupDelete}"/>
+                    </Grid>
+                    
+                    <!-- Confirm Archive Account Toggle -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Confirm Move to Archive" 
+                                     FontWeight="SemiBold"
+                                     Foreground="{DynamicResource TextPrimaryColor}"
+                                     FontSize="14"/>
+                            <TextBlock Text="Show confirmation dialog when moving accounts to archive" 
+                                     Foreground="{DynamicResource TextSecondaryColor}"
+                                     FontSize="12"
+                                     Margin="0,2,0,0"/>
+                        </StackPanel>
+                        
+                        <ToggleButton Grid.Column="1" 
+                                    Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                                    IsChecked="{Binding ConfirmArchiveAccount}"/>
+                    </Grid>
+                    
+                    <!-- Confirm Account Delete Toggle -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Confirm Move to Trash" 
+                                     FontWeight="SemiBold"
+                                     Foreground="{DynamicResource TextPrimaryColor}"
+                                     FontSize="14"/>
+                            <TextBlock Text="Show confirmation dialog when moving accounts to trash" 
+                                     Foreground="{DynamicResource TextSecondaryColor}"
+                                     FontSize="12"
+                                     Margin="0,2,0,0"/>
+                        </StackPanel>
+                        
+                        <ToggleButton Grid.Column="1" 
+                                    Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                                    IsChecked="{Binding ConfirmAccountDelete}"/>
                     </Grid>
                     
                 </StackPanel>

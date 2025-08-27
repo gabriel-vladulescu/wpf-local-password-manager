@@ -73,6 +73,16 @@
                                 </TextBlock>
                             </Border>
 
+                            <!-- Required Field Indicator -->
+                            <materialDesign:PackIcon x:Name="RequiredIcon" 
+                                Kind="Alert" 
+                                Width="12" Height="12"
+                                Foreground="#EF4444"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top"
+                                Margin="8,-15,0,0"
+                                Visibility="Collapsed"/>
+
                             <!-- Character Counter (bottom right) -->
                             <TextBlock x:Name="CharacterCounter"
                                       HorizontalAlignment="Right"
@@ -100,7 +110,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <materialDesign:PackIcon Grid.Column="0" Kind="InformationOutline" 
+                            <materialDesign:PackIcon x:Name="InfoIcon" Grid.Column="0" Kind="InformationOutline" 
                                 Width="13" Height="13"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Top"
@@ -159,17 +169,24 @@
                             <Setter TargetName="MainBorder" Property="BorderBrush" Value="{DynamicResource InputFocusBrush}"/>
                         </Trigger>
 
-                        <!-- Hide info text if empty -->
+                        <!-- Hide info text and icon if empty -->
                         <Trigger Property="helpers:TextBoxHelper.Info" Value="">
                             <Setter TargetName="InfoText" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="InfoIcon" Property="Visibility" Value="Collapsed"/>
                         </Trigger>
                         <Trigger Property="helpers:TextBoxHelper.Info" Value="{x:Null}">
                             <Setter TargetName="InfoText" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="InfoIcon" Property="Visibility" Value="Collapsed"/>
                         </Trigger>
 
                         <!-- Hide character counter if no limit set -->
                         <Trigger Property="helpers:TextBoxHelper.MaxChars" Value="0">
                             <Setter TargetName="CharacterCounter" Property="Visibility" Value="Collapsed"/>
+                        </Trigger>
+
+                        <!-- Show required indicator for required fields -->
+                        <Trigger Property="helpers:TextBoxHelper.Required" Value="True">
+                            <Setter TargetName="RequiredIcon" Property="Visibility" Value="Visible"/>
                         </Trigger>
                         
 
@@ -181,7 +198,9 @@
                                     <Binding RelativeSource="{RelativeSource Self}" Path="(helpers:TextBoxHelper.MaxChars)"/>
                                 </MultiBinding>
                             </DataTrigger.Binding>
-                            <Setter TargetName="CharacterCounter" Property="Foreground" Value="{DynamicResource WarningColor}"/>
+                            <DataTrigger.Setters>
+                                <Setter TargetName="CharacterCounter" Property="Foreground" Value="{DynamicResource WarningColor}"/>
+                            </DataTrigger.Setters>
                         </DataTrigger>
 
                         <!-- Error state when over limit -->
@@ -192,8 +211,10 @@
                                     <Binding RelativeSource="{RelativeSource Self}" Path="(helpers:TextBoxHelper.MaxChars)"/>
                                 </MultiBinding>
                             </DataTrigger.Binding>
-                            <Setter TargetName="CharacterCounter" Property="Foreground" Value="{DynamicResource DangerColor}"/>
-                            <Setter TargetName="MainBorder" Property="BorderBrush" Value="{DynamicResource DangerColor}"/>
+                            <DataTrigger.Setters>
+                                <Setter TargetName="CharacterCounter" Property="Foreground" Value="{DynamicResource DangerColor}"/>
+                                <Setter TargetName="MainBorder" Property="BorderBrush" Value="{DynamicResource DangerColor}"/>
+                            </DataTrigger.Setters>
                         </DataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

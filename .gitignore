@@ -5,3 +5,6 @@
 obj
 bin
 publish
+
+# Solution files (not needed for single project)
+*.sln

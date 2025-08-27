@@ -11,6 +11,8 @@ namespace AccountManager.Models
         public DateTime LastBackup { get; set; } = DateTime.MinValue;
         public string Version { get; set; } = "2.1.0";
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public AppSettings Settings { get; set; } = new();
+        public ThemeSettings Theme { get; set; } = new();
 
         // Computed properties for analytics/UI
         [JsonIgnore]
@@ -84,6 +86,8 @@ namespace AccountManager.Models
             Groups = new List<AccountGroup>();
             CreatedAt = DateTime.Now;
             Version = "2.1.0";
+            Settings = new AppSettings();
+            Theme = new ThemeSettings();
         }
 
         public AccountGroup FindGroup(string groupName)
@@ -180,11 +184,34 @@ namespace AccountManager.Models
                 clone.Groups.Add(group.Clone());
             }
 
+            clone.Settings = new AppSettings
+            {
+                CensorAccountData = this.Settings.CensorAccountData,
+                CensorPassword = this.Settings.CensorPassword,
+                EnableEncryption = this.Settings.EnableEncryption,
+                EnableLocalSearch = this.Settings.EnableLocalSearch,
+                ConfirmAccountDelete = this.Settings.ConfirmAccountDelete,
+                ConfirmGroupDelete = this.Settings.ConfirmGroupDelete,
+                ConfirmArchiveAccount = this.Settings.ConfirmArchiveAccount,
+                EnableTrash = this.Settings.EnableTrash,
+                EnableArchive = this.Settings.EnableArchive,
+                TrashRetentionDays = this.Settings.TrashRetentionDays,
+                AutoEmptyTrash = this.Settings.AutoEmptyTrash,
+                ShowFavoritesGroup = this.Settings.ShowFavoritesGroup
+            };
+
+            clone.Theme = new ThemeSettings
+            {
+                CurrentTheme = this.Theme.CurrentTheme
+            };
+
             return clone;
         }
 
         public void Validate()
         {
+            Settings ??= new AppSettings();
+            Theme ??= new ThemeSettings();
             if (Groups == null)
                 throw new InvalidOperationException("Groups collection cannot be null");
 
@@ -193,6 +220,12 @@ namespace AccountManager.Models
 
             // Remove any invalid groups
             Groups.RemoveAll(g => !g.IsValid());
+
+            // Reinitialize event handlers for all groups after JSON deserialization
+            foreach (var group in Groups)
+            {
+                group.ReinitializeAfterDeserialization();
+            }
 
             // Remove any invalid accounts from groups
             foreach (var group in Groups)
@@ -222,5 +255,28 @@ namespace AccountManager.Models
                 ["lastFavoriteActivity"] = MostRecentFavorite?.LastModifiedFormatted ?? "Never"
             };
         }
+    }
+
+    // App Settings class for JSON serialization
+    public class AppSettings
+    {
+        public bool CensorAccountData { get; set; } = false;
+        public bool CensorPassword { get; set; } = true;
+        public bool EnableEncryption { get; set; } = false;
+        public bool EnableLocalSearch { get; set; } = true;
+        public bool ConfirmAccountDelete { get; set; } = true;
+        public bool ConfirmGroupDelete { get; set; } = true;
+        public bool ConfirmArchiveAccount { get; set; } = true;
+        public bool EnableTrash { get; set; } = true;
+        public bool EnableArchive { get; set; } = true;
+        public int TrashRetentionDays { get; set; } = 30;
+        public bool AutoEmptyTrash { get; set; } = false;
+        public bool ShowFavoritesGroup { get; set; } = true;
+    }
+
+    // Theme Settings class for JSON serialization
+    public class ThemeSettings
+    {
+        public string CurrentTheme { get; set; } = "Light";
     }
 }

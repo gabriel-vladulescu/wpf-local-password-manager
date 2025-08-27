@@ -7,13 +7,35 @@ namespace AccountManager.Views.Dialogs
 {
     public partial class ConfirmationDialog : UserControl
     {
-        // ADD these two properties:
         public bool? DialogResult { get; set; }
         public event EventHandler DialogClosed;
 
         public ConfirmationDialog()
         {
             InitializeComponent();
+            DataContextChanged += OnDataContextChanged;
+        }
+
+        private void OnDataContextChanged(object sender, System.Windows.DependencyPropertyChangedEventArgs e)
+        {
+            if (e.OldValue is ConfirmationDialogViewModel oldViewModel)
+            {
+                oldViewModel.CloseRequested -= OnCloseRequested;
+            }
+
+            if (e.NewValue is ConfirmationDialogViewModel newViewModel)
+            {
+                newViewModel.CloseRequested += OnCloseRequested;
+            }
+        }
+
+        private void OnCloseRequested(object sender, EventArgs e)
+        {
+            if (ViewModel != null)
+            {
+                DialogResult = ViewModel.Result;
+            }
+            DialogClosed?.Invoke(this, EventArgs.Empty);
         }
 
         public ConfirmationDialogViewModel ViewModel => DataContext as ConfirmationDialogViewModel;
@@ -48,7 +70,9 @@ namespace AccountManager.Views.Dialogs
         // ADD these new methods (simple versions):
         public void SetupForAccountTrash(Account account)
         {
-            SetupAccountDeleteConfirmation(account); // Reuse existing
+            var viewModel = new ConfirmationDialogViewModel();
+            viewModel.SetupForAccountTrash(account);
+            DataContext = viewModel;
         }
 
         public void SetupForEmptyTrash(int itemCount)
@@ -66,6 +90,13 @@ namespace AccountManager.Views.Dialogs
         public void SetupForAccountDelete(Account account)
         {
             SetupAccountDeleteConfirmation(account); // Reuse existing
+        }
+
+        public void SetupForAccountArchive(Account account)
+        {
+            var viewModel = new ConfirmationDialogViewModel();
+            viewModel.SetupForAccountArchive(account);
+            DataContext = viewModel;
         }
 
         // DON'T ADD: Any WireUpCommands method

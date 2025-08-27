@@ -33,54 +33,60 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="60"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- Custom Title Bar -->
+                <!-- Custom Title Bar with Integrated Controls -->
                 <Border Grid.Row="0" Grid.ColumnSpan="2" 
-                    Background="{DynamicResource AppBarBackgroundColor}">
+                    Background="{DynamicResource MainBackgroundColor}">
                     <Grid>
-                        <titleBarViews:WindowChrome />
-                        <titleBarViews:WindowControls />
-                    </Grid>
-                </Border>
-                
-                <!-- Content Header with Search and Controls -->
-                <Grid Grid.Row="1" Background="Transparent" Height="60">
-                    <Grid Margin="12,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         
-                        <!-- Global Search Bar -->
-                        <searchViews:GlobalSearch Grid.Column="0" />
+                        <!-- Full Area Draggable Background -->
+                        <titleBarViews:WindowChrome Grid.Column="0" Grid.ColumnSpan="4" />
                         
-                        <!-- Right Controls -->
-                        <StackPanel Grid.Column="1" 
+                        <!-- Global Search Bar (Left side) -->
+                        <searchViews:GlobalSearch Grid.Column="0" 
+                                                Margin="20,0,0,0" />
+                        
+                        <!-- Right Controls Section -->
+                        <StackPanel Grid.Column="2" 
                                   Orientation="Horizontal" 
-                                  HorizontalAlignment="Right" 
-                                  VerticalAlignment="Center">
+                                  VerticalAlignment="Center"
+                                  Margin="20,0">
                             <!-- Theme Toggle Button -->
-                            <controlsViews:ThemeToggle />
+                            <controlsViews:ThemeToggle Margin="0,0,8,0" />
                             
                             <!-- Settings Button -->
                             <controlsViews:SettingsButton />
                         </StackPanel>
+                        
+                        <!-- Window Controls -->
+                        <titleBarViews:WindowControls Grid.Column="3" />
                     </Grid>
-                </Grid>
-
+                </Border>
+                
                 <!-- Error Alert -->
                 <notificationsViews:ErrorAlert Grid.Row="1" />
 
                 <!-- Main Content Area -->
-                <Grid Grid.Row="2">
+                <Grid Grid.Row="2" Background="{DynamicResource MainBackgroundColor}"
+                      MinHeight="400">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
                     <!-- Content Container (when accounts panel should be visible) -->
-                    <contentViews:ContentContainer Visibility="{Binding IsAccountsPanelVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    <contentViews:ContentContainer Grid.Row="0" 
+                                                   Visibility="{Binding IsAccountsPanelVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     
                     <!-- Empty States (when no group selected or no groups exist) -->
-                    <contentViews:EmptyStates />
+                    <contentViews:EmptyStates Grid.Row="0" />
                 </Grid>
             </Grid>
         </Grid>

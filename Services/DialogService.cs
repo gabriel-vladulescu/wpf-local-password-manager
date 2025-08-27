@@ -75,9 +75,24 @@ namespace AccountManager
                     confirmDialog.DialogClosed += (s, e) => tcs.TrySetResult(confirmDialog.DialogResult);
                     break;
                 case SettingsDialog settingsDialog:
-                    SetupButtonHandlers(settingsDialog, tcs, null);
+                    SetupSettingsDialogHandlers(settingsDialog, tcs);
                     break;
             }
+        }
+
+        private static void SetupSettingsDialogHandlers(SettingsDialog settingsDialog, TaskCompletionSource<bool?> tcs)
+        {
+            System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
+            {
+                var closeButton = FindButtonByContent(settingsDialog, "Close");
+                var resetButton = FindButtonByContent(settingsDialog, "Reset to Defaults");
+
+                if (closeButton != null)
+                    closeButton.Click += (s, e) => tcs.TrySetResult(true);
+
+                // Reset button doesn't close the dialog, just resets settings
+                // No handler needed for reset button
+            }), System.Windows.Threading.DispatcherPriority.Loaded);
         }
 
         private static void SetupButtonHandlers(UserControl dialog, TaskCompletionSource<bool?> tcs, string saveButtonText)

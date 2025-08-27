@@ -8,7 +8,7 @@
 
     <Border Style="{StaticResource GlassPanel}" 
             MinWidth="490" MaxWidth="490" MaxHeight="800"
-            Background="{DynamicResource CardBackgroundColor}">
+            Background="{DynamicResource MainBackgroundColor}">
         <Grid Margin="32">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -106,14 +106,12 @@
                 <Button Content="Cancel" 
                       Style="{StaticResource SecondaryButton}"
                       MinWidth="100"
-                      Margin="0,0,16,0"
-                      Command="{Binding CancelCommand}"/>
+                      Margin="0,0,16,0"/>
                 
                 <Button Content="{Binding ActionButtonText}" 
                       Style="{StaticResource PrimaryButton}"
                       MinWidth="100"
-                      IsEnabled="{Binding CanSave}"
-                      Command="{Binding SaveCommand}"/>
+                      IsEnabled="{Binding CanSave}"/>
             </StackPanel>
         </Grid>
     </Border>

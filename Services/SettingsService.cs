@@ -1,103 +1,129 @@
 using System;
 using System.ComponentModel;
-using System.IO;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
+using AccountManager.Models;
 
 namespace AccountManager.Services
 {
     public class SettingsService : INotifyPropertyChanged
     {
         private static SettingsService _instance;
-        private readonly string _settingsPath;
-
-        // Private backing fields
-        private bool _censorAccountData = false;
-        private bool _censorPassword = true;
-        private bool _enableEncryption = false;
-        private bool _enableLocalSearch = true;
-        private bool _confirmAccountDelete = true;
-        private bool _confirmGroupDelete = true;
-        private bool _enableTrash = true;
-        private bool _enableArchive = true;
-        private bool _showFavoritesGroup = true;
-        private int _trashRetentionDays = 30;
-        private bool _autoEmptyTrash = false;
+        private readonly DataManager _dataManager;
 
         public static SettingsService Instance => _instance ??= new SettingsService();
 
         // Privacy & Security Settings
         public bool CensorAccountData
         {
-            get => _censorAccountData;
+            get => _dataManager.CurrentData?.Settings?.CensorAccountData ?? false;
             set
             {
-                if (SetProperty(ref _censorAccountData, value))
+                if (_dataManager.CurrentData?.Settings != null && _dataManager.CurrentData.Settings.CensorAccountData != value)
+                {
+                    _dataManager.CurrentData.Settings.CensorAccountData = value;
                     SaveSettings();
+                    OnPropertyChanged();
+                }
             }
         }
 
         public bool CensorPassword
         {
-            get => _censorPassword;
+            get => _dataManager.CurrentData?.Settings?.CensorPassword ?? true;
             set
             {
-                if (SetProperty(ref _censorPassword, value))
+                if (_dataManager.CurrentData?.Settings != null && _dataManager.CurrentData.Settings.CensorPassword != value)
+                {
+                    _dataManager.CurrentData.Settings.CensorPassword = value;
                     SaveSettings();
+                    OnPropertyChanged();
+                }
             }
         }
 
         public bool EnableEncryption
         {
-            get => _enableEncryption;
+            get => _dataManager.CurrentData?.Settings?.EnableEncryption ?? false;
             set
             {
-                if (SetProperty(ref _enableEncryption, value))
+                if (_dataManager.CurrentData?.Settings != null && _dataManager.CurrentData.Settings.EnableEncryption != value)
+                {
+                    _dataManager.CurrentData.Settings.EnableEncryption = value;
                     SaveSettings();
+                    OnPropertyChanged();
+                }
             }
         }
 
         // UI Settings
         public bool EnableLocalSearch
         {
-            get => _enableLocalSearch;
+            get => _dataManager.CurrentData?.Settings?.EnableLocalSearch ?? true;
             set
             {
-                if (SetProperty(ref _enableLocalSearch, value))
+                if (_dataManager.CurrentData?.Settings != null && _dataManager.CurrentData.Settings.EnableLocalSearch != value)
+                {
+                    _dataManager.CurrentData.Settings.EnableLocalSearch = value;
                     SaveSettings();
+                    OnPropertyChanged();
+                }
             }
         }
 
         // Confirmation Settings
         public bool ConfirmAccountDelete
         {
-            get => _confirmAccountDelete;
+            get => _dataManager.CurrentData?.Settings?.ConfirmAccountDelete ?? true;
             set
             {
-                if (SetProperty(ref _confirmAccountDelete, value))
+                if (_dataManager.CurrentData?.Settings != null && _dataManager.CurrentData.Settings.ConfirmAccountDelete != value)
+                {
+                    _dataManager.CurrentData.Settings.ConfirmAccountDelete = value;
                     SaveSettings();
+                    OnPropertyChanged();
+                }
             }
         }
 
         public bool ConfirmGroupDelete
         {
-            get => _confirmGroupDelete;
+            get => _dataManager.CurrentData?.Settings?.ConfirmGroupDelete ?? true;
             set
             {
-                if (SetProperty(ref _confirmGroupDelete, value))
+                if (_dataManager.CurrentData?.Settings != null && _dataManager.CurrentData.Settings.ConfirmGroupDelete != value)
+                {
+                    _dataManager.CurrentData.Settings.ConfirmGroupDelete = value;
                     SaveSettings();
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public bool ConfirmArchiveAccount
+        {
+            get => _dataManager.CurrentData?.Settings?.ConfirmArchiveAccount ?? true;
+            set
+            {
+                if (_dataManager.CurrentData?.Settings != null && _dataManager.CurrentData.Settings.ConfirmArchiveAccount != value)
+                {
+                    _dataManager.CurrentData.Settings.ConfirmArchiveAccount = value;
+                    SaveSettings();
+                    OnPropertyChanged();
+                }
             }
         }
 
         // Trash & Archive Settings
         public bool EnableTrash
         {
-            get => _enableTrash;
+            get => _dataManager.CurrentData?.Settings?.EnableTrash ?? true;
             set
             {
-                if (SetProperty(ref _enableTrash, value))
+                if (_dataManager.CurrentData?.Settings != null && _dataManager.CurrentData.Settings.EnableTrash != value)
                 {
+                    _dataManager.CurrentData.Settings.EnableTrash = value;
                     SaveSettings();
+                    OnPropertyChanged();
                     TrashSettingChanged?.Invoke(value);
                 }
             }
@@ -105,12 +131,14 @@ namespace AccountManager.Services
 
         public bool EnableArchive
         {
-            get => _enableArchive;
+            get => _dataManager.CurrentData?.Settings?.EnableArchive ?? true;
             set
             {
-                if (SetProperty(ref _enableArchive, value))
+                if (_dataManager.CurrentData?.Settings != null && _dataManager.CurrentData.Settings.EnableArchive != value)
                 {
+                    _dataManager.CurrentData.Settings.EnableArchive = value;
                     SaveSettings();
+                    OnPropertyChanged();
                     ArchiveSettingChanged?.Invoke(value);
                 }
             }
@@ -118,12 +146,14 @@ namespace AccountManager.Services
 
         public bool ShowFavoritesGroup
         {
-            get => _showFavoritesGroup;
+            get => _dataManager.CurrentData?.Settings?.ShowFavoritesGroup ?? true;
             set
             {
-                if (SetProperty(ref _showFavoritesGroup, value))
+                if (_dataManager.CurrentData?.Settings != null && _dataManager.CurrentData.Settings.ShowFavoritesGroup != value)
                 {
+                    _dataManager.CurrentData.Settings.ShowFavoritesGroup = value;
                     SaveSettings();
+                    OnPropertyChanged();
                     FavoritesVisibilityChanged?.Invoke(value);
                 }
             }
@@ -131,21 +161,29 @@ namespace AccountManager.Services
 
         public int TrashRetentionDays
         {
-            get => _trashRetentionDays;
+            get => _dataManager.CurrentData?.Settings?.TrashRetentionDays ?? 30;
             set
             {
-                if (SetProperty(ref _trashRetentionDays, value))
+                if (_dataManager.CurrentData?.Settings != null && _dataManager.CurrentData.Settings.TrashRetentionDays != value)
+                {
+                    _dataManager.CurrentData.Settings.TrashRetentionDays = value;
                     SaveSettings();
+                    OnPropertyChanged();
+                }
             }
         }
 
         public bool AutoEmptyTrash
         {
-            get => _autoEmptyTrash;
+            get => _dataManager.CurrentData?.Settings?.AutoEmptyTrash ?? false;
             set
             {
-                if (SetProperty(ref _autoEmptyTrash, value))
+                if (_dataManager.CurrentData?.Settings != null && _dataManager.CurrentData.Settings.AutoEmptyTrash != value)
+                {
+                    _dataManager.CurrentData.Settings.AutoEmptyTrash = value;
                     SaveSettings();
+                    OnPropertyChanged();
+                }
             }
         }
 
@@ -156,13 +194,7 @@ namespace AccountManager.Services
 
         private SettingsService()
         {
-            var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            var appFolder = Path.Combine(appDataPath, "AccountManager");
-            
-            if (!Directory.Exists(appFolder))
-                Directory.CreateDirectory(appFolder);
-                
-            _settingsPath = Path.Combine(appFolder, "settings.json");
+            _dataManager = DataManager.Instance;
             LoadSettings();
         }
 
@@ -170,29 +202,14 @@ namespace AccountManager.Services
         {
             try
             {
-                if (File.Exists(_settingsPath))
-                {
-                    var json = File.ReadAllText(_settingsPath);
-                    var settings = JsonSerializer.Deserialize<SettingsData>(json);
-                    
-                    if (settings != null)
-                    {
-                        _censorAccountData = settings.CensorAccountData;
-                        _censorPassword = settings.CensorPassword;
-                        _enableEncryption = settings.EnableEncryption;
-                        _enableLocalSearch = settings.EnableLocalSearch;
-                        _confirmAccountDelete = settings.ConfirmAccountDelete;
-                        _confirmGroupDelete = settings.ConfirmGroupDelete;
-                        _enableTrash = settings.EnableTrash;
-                        _enableArchive = settings.EnableArchive;
-                        _trashRetentionDays = settings.TrashRetentionDays;
-                        _autoEmptyTrash = settings.AutoEmptyTrash;
-                        _showFavoritesGroup = settings.ShowFavoritesGroup; // ADD THIS LINE
-
-                        // Notify all properties changed
-                        OnPropertyChanged(string.Empty);
-                    }
-                }
+                // Ensure settings are initialized in the shared data
+                _dataManager.CurrentData.Settings ??= new AppSettings();
+                _dataManager.CurrentData.Theme ??= new ThemeSettings();
+                
+                // Notify all properties changed
+                OnPropertyChanged(string.Empty);
+                
+                System.Diagnostics.Debug.WriteLine("Settings loaded from shared DataManager");
             }
             catch (Exception ex)
             {
@@ -204,24 +221,8 @@ namespace AccountManager.Services
         {
             try
             {
-                var settings = new SettingsData
-                {
-                    CensorAccountData = _censorAccountData,
-                    CensorPassword = _censorPassword,
-                    EnableEncryption = _enableEncryption,
-                    EnableLocalSearch = _enableLocalSearch,
-                    ConfirmAccountDelete = _confirmAccountDelete,
-                    ConfirmGroupDelete = _confirmGroupDelete,
-                    EnableTrash = _enableTrash,
-                    EnableArchive = _enableArchive,
-                    TrashRetentionDays = _trashRetentionDays,
-                    AutoEmptyTrash = _autoEmptyTrash,
-                    ShowFavoritesGroup = _showFavoritesGroup // ADD THIS LINE
-                };
-
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                var json = JsonSerializer.Serialize(settings, options);
-                File.WriteAllText(_settingsPath, json);
+                _dataManager.SaveCurrentData();
+                System.Diagnostics.Debug.WriteLine("Settings saved via DataManager");
             }
             catch (Exception ex)
             {
@@ -231,20 +232,12 @@ namespace AccountManager.Services
 
         public void ResetToDefaults()
         {
-            _censorAccountData = false;
-            _censorPassword = true;
-            _enableEncryption = false;
-            _enableLocalSearch = true;
-            _confirmAccountDelete = true;
-            _confirmGroupDelete = true;
-            _enableTrash = true;
-            _enableArchive = true;
-            _trashRetentionDays = 30;
-            _autoEmptyTrash = false;
-            _showFavoritesGroup = true; // ADD THIS LINE
-
-            SaveSettings();
-            OnPropertyChanged(string.Empty);
+            if (_dataManager.CurrentData?.Settings != null)
+            {
+                _dataManager.CurrentData.Settings = new AppSettings(); // This will use default values
+                SaveSettings();
+                OnPropertyChanged(string.Empty);
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -263,21 +256,5 @@ namespace AccountManager.Services
             OnPropertyChanged(propertyName);
             return true;
         }
-    }
-
-    // Data class for JSON serialization
-    public class SettingsData
-    {
-        public bool CensorAccountData { get; set; } = false;
-        public bool CensorPassword { get; set; } = true;
-        public bool EnableEncryption { get; set; } = false;
-        public bool EnableLocalSearch { get; set; } = true;
-        public bool ConfirmAccountDelete { get; set; } = true;
-        public bool ConfirmGroupDelete { get; set; } = true;
-        public bool EnableTrash { get; set; } = true;
-        public bool EnableArchive { get; set; } = true;
-        public int TrashRetentionDays { get; set; } = 30;
-        public bool AutoEmptyTrash { get; set; } = false;
-        public bool ShowFavoritesGroup { get; set; } = true; // ADD THIS LINE
     }
 }
