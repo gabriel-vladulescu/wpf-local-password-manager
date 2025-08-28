@@ -1,0 +1,9 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!-- Asset Image Sources -->
+    <BitmapImage x:Key="LogoLightSource" UriSource="pack://application:,,,/src/Assets/logo-light.png"/>
+    <BitmapImage x:Key="LogoDarkSource" UriSource="pack://application:,,,/src/Assets/logo-dark.png"/>
+    <BitmapImage x:Key="LogoDefaultSource" UriSource="pack://application:,,,/src/Assets/logo.png"/>
+    
+</ResourceDictionary>

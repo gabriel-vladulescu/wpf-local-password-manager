@@ -1,0 +1,112 @@
+<UserControl x:Class="AccountManager.Views.Window.Search.LocalSearch"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+
+    <!-- Local Search Bar - Matching Global Search Style -->
+    <Border Background="{DynamicResource InputBackgroundBrush}"
+            BorderBrush="{DynamicResource InputBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="8" 
+            Height="32"
+            Margin="0"
+            HorizontalAlignment="Stretch"
+            Visibility="{Binding EnableLocalSearch, 
+                Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Border.Style>
+            <Style TargetType="Border">
+                <Style.Triggers>
+                    <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                        <Setter Property="BorderBrush" Value="{DynamicResource InputBorderFocusBrush}"/>
+                        <Setter Property="Effect">
+                            <Setter.Value>
+                                <DropShadowEffect Color="#c5c4fe" 
+                                                BlurRadius="12" 
+                                                Opacity="0.6" 
+                                                ShadowDepth="0"/>
+                            </Setter.Value>
+                        </Setter>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
+        
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <materialDesign:PackIcon Grid.Column="0" 
+                                    Kind="Magnify" 
+                                    Foreground="{DynamicResource InputPlaceholderBrush}"
+                                    Width="16" Height="16"
+                                    Margin="10,0,8,0"
+                                    VerticalAlignment="Center"/>
+            
+            <TextBox Grid.Column="1"
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     Background="Transparent"
+                     Foreground="{DynamicResource InputTextBrush}"
+                     BorderThickness="0"
+                     FontSize="13"
+                     FontWeight="Regular"
+                     VerticalAlignment="Center"
+                     Margin="0,2"
+                     Style="{x:Null}">
+                <TextBox.Template>
+                    <ControlTemplate TargetType="TextBox">
+                        <Grid>
+                            <TextBlock x:Name="HintText"
+                                     Text="Search in this group..."
+                                     Foreground="{DynamicResource InputPlaceholderBrush}"
+                                     FontSize="13"
+                                     FontWeight="Regular"
+                                     VerticalAlignment="Center"
+                                     IsHitTestVisible="False"
+                                     Margin="2,0,0,0"
+                                     Opacity="0.7">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Text, RelativeSource={RelativeSource TemplatedParent}}" Value="">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Opacity" Value="0.7"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <ScrollViewer x:Name="PART_ContentHost" 
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        IsTabStop="False"
+                                        VerticalAlignment="Center"
+                                        Margin="2,0,0,0"/>
+                        </Grid>
+                    </ControlTemplate>
+                </TextBox.Template>
+            </TextBox>
+            
+            <!-- Clear Search Button -->
+            <Button Grid.Column="2" 
+                    Style="{StaticResource MaterialDesignIconButton}"
+                    Command="{Binding ClearSearchCommand}"
+                    Width="24" Height="24"
+                    Margin="4,0,6,0"
+                    Visibility="{Binding SearchText, Converter={StaticResource StringIsEmptyVisibilityConverter}}">
+                <materialDesign:PackIcon Kind="Close" 
+                                        Foreground="{DynamicResource TextSecondaryColor}" 
+                                        Width="12" Height="12"/>
+            </Button>
+        </Grid>
+    </Border>
+
+</UserControl>

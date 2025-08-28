@@ -1,7 +1,8 @@
 using System;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Reflection;
-using AccountManager.Services;
+using AccountManager.Core;
 
 namespace AccountManager
 {
@@ -15,12 +16,15 @@ namespace AccountManager
         public static string AppCopyright { get; private set; }
         public static string AppTitleWithVersion { get; private set; }
 
-        protected override void OnStartup(StartupEventArgs e)
+        protected override async void OnStartup(StartupEventArgs e)
         {
             try
             {
                 SetupGlobalInfo();
-                SetupGlobalServices();
+                await SetupGlobalServicesAsync();
+                
+                // Create and show MainWindow only after theme is fully loaded
+                CreateAndShowMainWindow();
             }
             catch (Exception ex)
             {
@@ -56,15 +60,26 @@ namespace AccountManager
             Resources["AppTitleWithVersion"] = AppTitleWithVersion;
         }
 
-        private void SetupGlobalServices()
+        private async Task SetupGlobalServicesAsync()
         {
-            _ = ThemeService.Instance;
+            // Initialize the new service container
+            var serviceContainer = ServiceContainer.Instance;
+            
+            // Initialize custom path from configuration
+            serviceContainer.InitializeCustomPath();
+            
+            // Initialize theme manager early and await theme loading before UI shows
+            var themeManager = serviceContainer.ThemeManager;
+            await themeManager.InitializeAsync();
         }
 
-        // protected override void OnExit(ExitEventArgs e)
-        // {
-        //     // Do actions on exit
-        //     base.OnExit(e);
-        // }
+        private void CreateAndShowMainWindow()
+        {
+            // Create MainWindow only after theme is fully initialized
+            var mainWindow = new Views.Window.MainWindow();
+            MainWindow = mainWindow;
+            mainWindow.Show();
+        }
+
     }
 }

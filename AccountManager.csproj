@@ -14,7 +14,7 @@
     <Company>Avanty.Works</Company>
     <Description>Secure password and account management application</Description>
     <Copyright>Copyright © 2025</Copyright>
-    <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
+    <ApplicationIcon>src\Assets\icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Assets\logo-light.png" />
-    <Resource Include="Assets\logo-dark.png" />
+    <Resource Include="src\Assets\logo-light.png" />
+    <Resource Include="src\Assets\logo-dark.png" />
   </ItemGroup>
 </Project>
