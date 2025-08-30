@@ -39,7 +39,6 @@ namespace AccountManager.Infrastructure.Serialization
             {
                 if (!_fileStorage.Exists(filePath))
                 {
-                    System.Diagnostics.Debug.WriteLine($"Data file {filePath} not found, creating new data structure");
                     return new T();
                 }
 
@@ -47,24 +46,18 @@ namespace AccountManager.Infrastructure.Serialization
                 
                 if (string.IsNullOrWhiteSpace(json))
                 {
-                    System.Diagnostics.Debug.WriteLine("Data file is empty, creating new data structure");
                     return new T();
                 }
 
                 var data = System.Text.Json.JsonSerializer.Deserialize<T>(json, _readOptions);
-                
-                System.Diagnostics.Debug.WriteLine($"Data loaded successfully from {filePath}");
-                
                 return data ?? new T();
             }
             catch (JsonException ex)
             {
-                System.Diagnostics.Debug.WriteLine($"JSON parsing error: {ex.Message}");
                 throw new DataException($"Invalid JSON data in {filePath}: {ex.Message}", ex);
             }
             catch (Exception ex) when (!(ex is DataException))
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading data: {ex.Message}");
                 throw new DataException($"Error loading data from {filePath}: {ex.Message}", ex);
             }
         }
@@ -74,18 +67,10 @@ namespace AccountManager.Infrastructure.Serialization
             try
             {
                 var json = System.Text.Json.JsonSerializer.Serialize(data, _writeOptions);
-                var success = await _fileStorage.WriteTextAsync(filePath, json);
-                
-                if (success)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Data saved successfully to {filePath}");
-                }
-                
-                return success;
+                return await _fileStorage.WriteTextAsync(filePath, json);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error saving data: {ex.Message}");
                 return false;
             }
         }

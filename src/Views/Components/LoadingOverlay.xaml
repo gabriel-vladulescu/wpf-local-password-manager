@@ -1,0 +1,63 @@
+<UserControl x:Class="AccountManager.Views.Components.LoadingOverlay"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+    
+    <Grid Background="#80000000">
+        <Border Background="{DynamicResource CardBackgroundColor}"
+                CornerRadius="12"
+                Padding="40"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                MinWidth="300"
+                MinHeight="150">
+            
+            <StackPanel HorizontalAlignment="Center"
+                       VerticalAlignment="Center">
+                
+                <!-- Loading Animation -->
+                <materialDesign:PackIcon Kind="Loading"
+                                       Width="48" 
+                                       Height="48"
+                                       Foreground="{DynamicResource PrimaryColor}"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,20">
+                    <materialDesign:PackIcon.RenderTransform>
+                        <RotateTransform CenterX="24" CenterY="24"/>
+                    </materialDesign:PackIcon.RenderTransform>
+                    <materialDesign:PackIcon.Triggers>
+                        <EventTrigger RoutedEvent="Loaded">
+                            <BeginStoryboard>
+                                <Storyboard RepeatBehavior="Forever">
+                                    <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Angle"
+                                                   From="0" To="360"
+                                                   Duration="0:0:1"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </materialDesign:PackIcon.Triggers>
+                </materialDesign:PackIcon>
+                
+                <!-- Loading Message -->
+                <TextBlock x:Name="LoadingMessage"
+                          Text="Loading..."
+                          FontSize="16"
+                          FontWeight="Medium"
+                          Foreground="{DynamicResource TextPrimaryColor}"
+                          TextAlignment="Center"
+                          HorizontalAlignment="Center"
+                          Margin="0,0,0,10"/>
+                
+                <!-- Progress Information -->
+                <TextBlock x:Name="ProgressInfo"
+                          Text="Please wait..."
+                          FontSize="14"
+                          Foreground="{DynamicResource TextSecondaryColor}"
+                          TextAlignment="Center"
+                          HorizontalAlignment="Center"
+                          Visibility="Collapsed"/>
+                          
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

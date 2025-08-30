@@ -335,6 +335,29 @@
                                     IsChecked="{Binding EnableLocalSearch}"/>
                     </Grid>
                     
+                    <!-- Application Notifications Toggle -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Application Notifications" 
+                                     FontWeight="SemiBold"
+                                     Foreground="{DynamicResource TextPrimaryColor}"
+                                     FontSize="14"/>
+                            <TextBlock Text="Show toast notifications for application actions" 
+                                     Foreground="{DynamicResource TextSecondaryColor}"
+                                     FontSize="12"
+                                     Margin="0,2,0,0"/>
+                        </StackPanel>
+                        
+                        <ToggleButton Grid.Column="1" 
+                                    Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                                    IsChecked="{Binding EnableApplicationNotifications}"/>
+                    </Grid>
+                    
                     <!-- Confirmation Section -->
                     <TextBlock Text="Confirmations" 
                              FontSize="16" 

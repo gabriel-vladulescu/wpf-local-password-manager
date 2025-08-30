@@ -19,8 +19,6 @@ namespace AccountManager.ViewModels
         private string _globalSearchText = "";
         private ObservableCollection<Account> _filteredAccounts = new();
         private ObservableCollection<Account> _globalSearchResults = new();
-        private string _errorMessage = "";
-        private bool _hasError = false;
         private bool _isListViewMode = false;
 
         // Current selection state (managed by SidebarViewModel)
@@ -92,17 +90,6 @@ namespace AccountManager.ViewModels
         public ObservableCollection<Account> DisplayedAccounts =>
             IsGlobalSearchActive ? GlobalSearchResults : FilteredAccounts;
 
-        public string ErrorMessage
-        {
-            get => _errorMessage;
-            set => SetProperty(ref _errorMessage, value);
-        }
-
-        public bool HasError
-        {
-            get => _hasError;
-            set => SetProperty(ref _hasError, value);
-        }
 
         // UI State Properties
         public bool IsGlobalSearchActive => !string.IsNullOrWhiteSpace(GlobalSearchText);
@@ -263,7 +250,6 @@ namespace AccountManager.ViewModels
         public ICommand OpenWebsiteCommand { get; private set; }
         public ICommand ClearSearchCommand { get; private set; }
         public ICommand ClearGlobalSearchCommand { get; private set; }
-        public ICommand DismissErrorCommand { get; private set; }
         public ICommand ToggleThemeCommand { get; private set; }
 
         public MainViewModel()
@@ -282,6 +268,7 @@ namespace AccountManager.ViewModels
             LoadDataAsync(); // Load data FIRST before subscribing to events
             SubscribeToSidebarEvents();
             SubscribeToSettingsEvents();
+            SubscribeToDataChanges(); // Subscribe to data change events for import/export
         }
 
         private void InitializeCommands()
@@ -299,7 +286,6 @@ namespace AccountManager.ViewModels
             OpenWebsiteCommand = new RelayCommand(OpenWebsite);
             ClearSearchCommand = new RelayCommand(_ => SearchText = "");
             ClearGlobalSearchCommand = new RelayCommand(_ => GlobalSearchText = "");
-            DismissErrorCommand = new RelayCommand(DismissError);
             ToggleThemeCommand = new RelayCommand(async _ => await _themeManager.ToggleThemeAsync());
         }
 
@@ -329,6 +315,22 @@ namespace AccountManager.ViewModels
                     OnPropertyChanged(nameof(CensorPassword));
                 }
             };
+        }
+
+        private void SubscribeToDataChanges()
+        {
+            // Subscribe to data changes from ApplicationStateManager
+            // This ensures UI updates when data is imported/exported or changed externally
+            _stateManager.DataChanged += OnApplicationDataChanged;
+        }
+
+        private void OnApplicationDataChanged(object sender, AppData newData)
+        {
+            // Refresh the UI with the new data - ensure we're on the UI thread
+            System.Windows.Application.Current?.Dispatcher.BeginInvoke(new System.Action(() =>
+            {
+                LoadDataAsync();
+            }));
         }
 
         private void OnGroupSelectionChanged(object sender, GroupSelectionEventArgs e)
@@ -406,8 +408,6 @@ namespace AccountManager.ViewModels
         {
             try
             {
-                HasError = false;
-                ErrorMessage = "";
 
                 var data = await _stateManager.GetCurrentDataAsync();
                 Groups.Clear();
@@ -430,21 +430,14 @@ namespace AccountManager.ViewModels
             }
             catch (System.IO.InvalidDataException ex)
             {
-                HasError = true;
-                ErrorMessage = ex.Message;
+                _notificationService.ShowError(ex.Message, "Data Error");
             }
             catch (Exception ex)
             {
-                HasError = true;
-                ErrorMessage = $"Unexpected error loading accounts: {ex.Message}";
+                _notificationService.ShowError($"Unexpected error loading accounts: {ex.Message}", "Error");
             }
         }
 
-        private void DismissError(object parameter)
-        {
-            HasError = false;
-            ErrorMessage = "";
-        }
 
         private void NotifyDataChanged()
         {
@@ -620,8 +613,7 @@ namespace AccountManager.ViewModels
 
             if (!_configurationManager.EnableArchive)
             {
-                MessageBox.Show("Archive functionality is disabled in settings.", "Archive Disabled", 
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                _notificationService.ShowInfo("Archive functionality is disabled in settings.", "Archive Disabled");
                 return;
             }
 
@@ -642,11 +634,13 @@ namespace AccountManager.ViewModels
                 NotifyDataChanged();
                 UpdateFilteredAccounts();
                 OnPropertyChanged(nameof(HeaderSubtitle));
+                
+                // Show success notification
+                _notificationService.ShowSuccess($"Account '{account.Name}' has been moved to archive.", "Account Archived");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error archiving account: {ex.Message}", "Error", MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                _notificationService.ShowError($"Error archiving account: {ex.Message}", "Error");
             }
         }
 
@@ -656,23 +650,36 @@ namespace AccountManager.ViewModels
 
             try
             {
+                string sourceLocation;
+                string targetGroup = null;
+                
                 if (account.IsArchived)
                 {
+                    sourceLocation = "archive";
                     SidebarViewModel.RestoreArchivedAccountToGroup(account);
+                    // Find the group the account was restored to
+                    var group = Groups.FirstOrDefault(g => g.Accounts.Contains(account));
+                    targetGroup = group?.Name ?? "a group";
                 }
                 else
                 {
+                    sourceLocation = "trash";
                     SidebarViewModel.RestoreAccount(account);
+                    // Find the group the account was restored to
+                    var group = Groups.FirstOrDefault(g => g.Accounts.Contains(account));
+                    targetGroup = group?.Name ?? "a group";
                 }
                 
                 NotifyDataChanged();
                 UpdateFilteredAccounts();
                 OnPropertyChanged(nameof(HeaderSubtitle));
+                
+                // Show success notification
+                _notificationService.ShowSuccess($"Account '{account.Name}' has been restored from {sourceLocation} to '{targetGroup}'.", "Account Restored");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error restoring account: {ex.Message}", "Error", MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                _notificationService.ShowError($"Error restoring account: {ex.Message}", "Error");
             }
         }
 
@@ -685,8 +692,7 @@ namespace AccountManager.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving data: {ex.Message}", "Save Error", MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                _notificationService.ShowError($"Error saving data: {ex.Message}", "Save Error");
             }
         }
 
@@ -743,8 +749,7 @@ namespace AccountManager.ViewModels
                 }
                 catch (Exception)
                 {
-                    MessageBox.Show("Failed to open website.", "Open Website Error",
-                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    _notificationService.ShowWarning("Failed to open website.", "Open Website Error");
                 }
             }
         }
@@ -867,8 +872,8 @@ namespace AccountManager.ViewModels
             }
             catch (Exception)
             {
-                MessageBox.Show("Failed to copy to clipboard.", "Copy Error",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                var notificationService = ServiceContainer.Instance.NotificationService;
+                notificationService.ShowWarning("Failed to copy to clipboard.", "Copy Error");
             }
         }
     }

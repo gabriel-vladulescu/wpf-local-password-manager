@@ -87,7 +87,8 @@ namespace AccountManager.Managers
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Could not sync Groups from ViewModels: {ex.Message}");
+                // Log error but don't fail the sync operation - this is not critical
+                System.Diagnostics.Debug.WriteLine($"Warning: Failed to sync groups from ViewModels: {ex.Message}");
             }
         }
 

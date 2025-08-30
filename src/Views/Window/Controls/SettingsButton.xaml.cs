@@ -23,7 +23,7 @@ namespace AccountManager.Views.Window.Controls
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error showing settings: {ex.Message}");
+                DialogHelper.ShowError($"Error opening settings dialog: {ex.Message}", "Settings Error");
             }
         }
     }

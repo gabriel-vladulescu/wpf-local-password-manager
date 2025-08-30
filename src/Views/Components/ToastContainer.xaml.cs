@@ -14,10 +14,10 @@ namespace AccountManager.Views.Components
             ToastsContainer.ItemsSource = Toasts;
         }
 
-        public void ShowToast(string title, string message, ToastNotification.ToastType type)
+        public void ShowToast(string title, string message, ToastNotification.ToastType type, bool autoClose = true)
         {
             var toast = new ToastNotification();
-            toast.SetContent(title, message, type);
+            toast.SetContent(title, message, type, autoClose);
             
             toast.Closed += (s, e) =>
             {

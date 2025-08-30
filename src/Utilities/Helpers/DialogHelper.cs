@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using AccountManager.Core;
+using AccountManager.Core.Interfaces;
 
 namespace AccountManager.Utilities.Helpers
 {
@@ -23,7 +24,6 @@ namespace AccountManager.Utilities.Helpers
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error showing dialog: {ex.Message}");
                 return false;
             }
         }
@@ -39,10 +39,9 @@ namespace AccountManager.Utilities.Helpers
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Dialog error: {ex.Message}");
-                
+                var notificationService = ServiceContainer.Instance.NotificationService;
                 var message = errorMessage ?? $"An error occurred while showing the dialog: {ex.Message}";
-                MessageBox.Show(message, errorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+                notificationService.ShowError(message, errorTitle);
                 
                 return false;
             }
@@ -74,9 +73,10 @@ namespace AccountManager.Utilities.Helpers
         /// <summary>
         /// Show a simple confirmation dialog
         /// </summary>
-        public static MessageBoxResult ShowConfirmation(string message, string title = "Confirm", MessageBoxButton buttons = MessageBoxButton.YesNo)
+        public static bool ShowConfirmation(string message, string title = "Confirm")
         {
-            return MessageBox.Show(message, title, buttons, MessageBoxImage.Question);
+            var notificationService = ServiceContainer.Instance.NotificationService;
+            return notificationService.ShowConfirmation(message, title);
         }
 
         /// <summary>
@@ -84,7 +84,8 @@ namespace AccountManager.Utilities.Helpers
         /// </summary>
         public static void ShowError(string message, string title = "Error")
         {
-            MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Error);
+            var notificationService = ServiceContainer.Instance.NotificationService;
+            notificationService.ShowError(message, title);
         }
 
         /// <summary>
@@ -92,7 +93,8 @@ namespace AccountManager.Utilities.Helpers
         /// </summary>
         public static void ShowInfo(string message, string title = "Information")
         {
-            MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
+            var notificationService = ServiceContainer.Instance.NotificationService;
+            notificationService.ShowInfo(message, title);
         }
 
         /// <summary>
@@ -100,7 +102,8 @@ namespace AccountManager.Utilities.Helpers
         /// </summary>
         public static void ShowWarning(string message, string title = "Warning")
         {
-            MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Warning);
+            var notificationService = ServiceContainer.Instance.NotificationService;
+            notificationService.ShowWarning(message, title);
         }
     }
 }

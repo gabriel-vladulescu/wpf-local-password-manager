@@ -65,8 +65,8 @@ namespace AccountManager
             // Initialize the new service container
             var serviceContainer = ServiceContainer.Instance;
             
-            // Initialize custom path from configuration
-            serviceContainer.InitializeCustomPath();
+            // Complete async initialization including path loading
+            await serviceContainer.CompleteInitializationAsync();
             
             // Initialize theme manager early and await theme loading before UI shows
             var themeManager = serviceContainer.ThemeManager;

@@ -6,7 +6,9 @@ using System.Windows.Input;
 using AccountManager.Core.Interfaces;
 using AccountManager.Views.Window;
 using AccountManager.Views.Dialogs;
+using AccountManager.Views.Components;
 using Microsoft.Win32;
+using System.Runtime.InteropServices;
 
 namespace AccountManager.UI
 {
@@ -20,6 +22,7 @@ namespace AccountManager.UI
         private MainWindow _mainWindow;
         private Grid _overlay;
         private ContentPresenter _content;
+        private LoadingOverlay _loadingOverlay;
 
         public static DialogManager Instance => _instance ??= new DialogManager();
 
@@ -229,6 +232,93 @@ namespace AccountManager.UI
             }
 
             return saveDialog.ShowDialog() == true ? saveDialog.FileName : null;
+        }
+
+        public string ShowSelectFolderDialog(string title, string defaultPath = null)
+        {
+            // Use SaveFileDialog with a clear instruction
+            // The filename will be auto-filled and users should just navigate and save
+            var dialog = new SaveFileDialog
+            {
+                Title = title + "",
+                FileName = "accounts.json",
+                DefaultExt = "json", 
+                Filter = "JSON Data Files|*.json|All Files|*.*",
+                FilterIndex = 1,
+                CheckPathExists = true,
+                OverwritePrompt = false,
+                AddExtension = true,
+                DereferenceLinks = true
+            };
+
+            if (!string.IsNullOrEmpty(defaultPath) && System.IO.Directory.Exists(defaultPath))
+            {
+                dialog.InitialDirectory = defaultPath;
+                // Also set the full path to make it clearer
+                dialog.FileName = System.IO.Path.Combine(defaultPath, "accounts.json");
+            }
+
+            if (dialog.ShowDialog() == true)
+            {
+                return System.IO.Path.GetDirectoryName(dialog.FileName);
+            }
+
+            return null;
+        }
+
+        public async Task ShowLoadingOverlayAsync(string message, TimeSpan duration)
+        {
+            ShowLoadingOverlay(message);
+            await Task.Delay(duration);
+            HideLoadingOverlay();
+        }
+
+        public async Task ShowLoadingOverlayAsync(string message, Func<Task> operation)
+        {
+            ShowLoadingOverlay(message);
+            try
+            {
+                await operation();
+            }
+            finally
+            {
+                HideLoadingOverlay();
+            }
+        }
+
+        private void ShowLoadingOverlay(string message)
+        {
+            // Try to find components if they're not found
+            if (_overlay == null || _content == null)
+            {
+                TryFindDialogComponents();
+            }
+            
+            if (_overlay == null || _content == null)
+                return;
+
+            // Create loading overlay if it doesn't exist
+            if (_loadingOverlay == null)
+            {
+                _loadingOverlay = new LoadingOverlay();
+            }
+
+            _loadingOverlay.Message = message;
+            _content.Content = _loadingOverlay;
+            _overlay.Visibility = Visibility.Visible;
+        }
+
+        public void HideLoadingOverlay()
+        {
+            if (_overlay != null)
+            {
+                _overlay.Visibility = Visibility.Collapsed;
+            }
+            
+            if (_content != null)
+            {
+                _content.Content = null;
+            }
         }
 
         private static T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject

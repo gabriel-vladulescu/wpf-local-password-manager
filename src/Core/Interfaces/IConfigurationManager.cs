@@ -16,6 +16,7 @@ namespace AccountManager.Core.Interfaces
 
         // UI Settings
         bool EnableLocalSearch { get; set; }
+        bool EnableApplicationNotifications { get; set; }
 
         // Confirmation Settings
         bool ConfirmAccountDelete { get; set; }

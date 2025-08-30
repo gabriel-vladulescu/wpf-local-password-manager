@@ -1,8 +1,11 @@
 using System;
+using System.IO;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using AccountManager.Core;
 using AccountManager.Core.Interfaces;
 using AccountManager.Managers;
+using AccountManager.Repositories;
 using AccountManager.Utilities.Helpers;
 
 namespace AccountManager.ViewModels
@@ -12,6 +15,8 @@ namespace AccountManager.ViewModels
         private readonly IConfigurationManager _configurationManager;
         private readonly IPathProvider _pathProvider;
         private readonly ImportExportManager _importExportManager;
+        private readonly INotificationService _notificationService;
+        private readonly AppDataRepository _dataRepository;
 
         // Privacy & Security Settings
         public bool CensorAccountData
@@ -64,6 +69,12 @@ namespace AccountManager.ViewModels
             set => _configurationManager.EnableLocalSearch = value;
         }
 
+        public bool EnableApplicationNotifications
+        {
+            get => _configurationManager.EnableApplicationNotifications;
+            set => _configurationManager.EnableApplicationNotifications = value;
+        }
+
         // Confirmation Settings
         public bool ConfirmAccountDelete
         {
@@ -103,6 +114,8 @@ namespace AccountManager.ViewModels
             _configurationManager = serviceContainer.ConfigurationManager;
             _pathProvider = serviceContainer.PathProvider;
             _importExportManager = serviceContainer.ImportExportManager;
+            _notificationService = serviceContainer.NotificationService;
+            _dataRepository = serviceContainer.DataRepository;
             
             InitializeCommands();
             
@@ -136,6 +149,9 @@ namespace AccountManager.ViewModels
         {
             _configurationManager.ResetToDefaults();
             
+            // Show notification
+            _notificationService.ShowSuccess("Settings have been reset to default values", "Settings Reset");
+            
             // Refresh all bindings
             OnPropertyChanged(string.Empty);
         }
@@ -145,40 +161,210 @@ namespace AccountManager.ViewModels
             // Dialog will be closed by the dialog service
         }
 
-        private void BrowseDataPath(object parameter)
+        private async void BrowseDataPath(object parameter)
         {
             var dialogManager = ServiceContainer.Instance.DialogManager;
-            var selectedPath = dialogManager.ShowSaveFileDialog(
+            var selectedFolder = dialogManager.ShowSelectFolderDialog(
                 "Choose Location for Account Data",
-                "JSON files (*.json)|*.json|All files (*.*)|*.*",
-                "accounts.json",
-                "json");
+                System.IO.Path.GetDirectoryName(_pathProvider.GetCurrentDataPath()));
 
-            if (!string.IsNullOrEmpty(selectedPath))
+            if (!string.IsNullOrEmpty(selectedFolder))
             {
-                if (_pathProvider.SetCustomDataPath(selectedPath))
+                // Get current state
+                var currentPath = _pathProvider.GetCurrentDataPath();
+                var isCurrentlyUsingDefault = _pathProvider.IsUsingDefaultPath();
+                
+                // Combine selected folder with accounts.json filename
+                var newPath = Path.Combine(selectedFolder, "accounts.json");
+                var defaultPath = _pathProvider.GetDefaultDataPath();
+                
+                // Normalize paths for comparison
+                var normalizedNewPath = Path.GetFullPath(newPath);
+                var normalizedDefaultPath = Path.GetFullPath(defaultPath);
+                var isNewPathDefault = normalizedNewPath.Equals(normalizedDefaultPath, StringComparison.OrdinalIgnoreCase);
+                
+                // BUSINESS LOGIC IMPLEMENTATION:
+                
+                // Browse -> if save is to system default (AppData) -> no action
+                if (isCurrentlyUsingDefault && isNewPathDefault)
                 {
-                    // Also update the configuration manager
-                    _configurationManager.CustomDataPath = selectedPath;
-                    OnPropertyChanged(nameof(DataFileDisplayPath));
+                    _notificationService.ShowInfo($"Data file is already located at: {_pathProvider.GetDisplayPath()}", "Same Location");
+                    return;
                 }
-                else
+                
+                // Browse -> if save is to a different folder than system default, move file to specified path, delete from appData
+                if (isCurrentlyUsingDefault && !isNewPathDefault)
                 {
-                    DialogHelper.ShowError("The selected path is not valid or cannot be accessed.", "Invalid Path");
+                    await MoveTo_Custom_From_AppData(newPath, currentPath);
+                    return;
+                }
+                
+                // Browse -> if we have a custom path and we try to save to system default (AppData), file should be moved to AppData and removed from custom path
+                if (!isCurrentlyUsingDefault && isNewPathDefault)
+                {
+                    await MoveTo_AppData_From_Custom(currentPath);
+                    return;
+                }
+                
+                // Browse -> if we have a custom path and try to save to the same custom path -> no action
+                if (!isCurrentlyUsingDefault && !isNewPathDefault)
+                {
+                    // Check if it's the same path
+                    var normalizedCurrentCustomPath = Path.GetFullPath(currentPath);
+                    var normalizedNewCustomPath = Path.GetFullPath(newPath);
+                    
+                    if (normalizedCurrentCustomPath.Equals(normalizedNewCustomPath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        _notificationService.ShowInfo($"Data file is already located at: {_pathProvider.GetDisplayPath()}", "Same Location");
+                        return;
+                    }
+                    
+                    // Browse -> custom path to different custom path
+                    await MoveTo_Custom_From_Custom(newPath, currentPath);
+                    return;
                 }
             }
         }
 
-        private void ResetDataPath(object parameter)
+        private async void ResetDataPath(object parameter)
         {
-            _pathProvider.ResetToDefaultPath();
-            _configurationManager.CustomDataPath = null;
-            OnPropertyChanged(nameof(DataFileDisplayPath));
+            var isCurrentlyUsingDefault = _pathProvider.IsUsingDefaultPath();
+            
+            // BUSINESS LOGIC IMPLEMENTATION:
+            
+            // Reset -> if is already system default (AppData) -> no action
+            if (isCurrentlyUsingDefault)
+            {
+                _notificationService.ShowInfo($"Data file is already located at: {_pathProvider.GetDisplayPath()}", "Already Default Location");
+                return;
+            }
+            
+            // Reset -> if is not system default (AppData), move file to AppData then delete it from custom path
+            var currentCustomPath = _pathProvider.GetCurrentDataPath();
+            await MoveTo_AppData_From_Custom(currentCustomPath);
         }
 
         private async void ImportData(object parameter)
         {
+            // Close the settings dialog first to allow the loading overlay to show properly
+            var dialogManager = ServiceContainer.Instance.DialogManager;
+            dialogManager.CloseDialog();
+            
+            // Import with loading overlay
             await _importExportManager.ImportDataAsync();
+        }
+
+        // HELPER METHODS FOR PATH OPERATIONS
+        
+        private async Task MoveTo_Custom_From_AppData(string newPath, string currentPath)
+        {
+            // Get current data before switching
+            var currentData = await _dataRepository.GetAsync();
+            
+            // Set new custom path
+            if (await _pathProvider.SetCustomDataPathAsync(newPath))
+            {
+                _configurationManager.CustomDataPath = newPath;
+                _dataRepository.InvalidateCache();
+                
+                // Save data to new custom location
+                if (currentData != null)
+                {
+                    await _dataRepository.SaveAsync(currentData);
+                    
+                    // Delete from AppData
+                    try
+                    {
+                        if (File.Exists(currentPath))
+                        {
+                            File.Delete(currentPath);
+                        }
+                        _notificationService.ShowInfo($"Data file moved to: {_pathProvider.GetDisplayPath()}\nOld AppData file deleted.", "Moved to Custom Location");
+                    }
+                    catch (Exception ex)
+                    {
+                        _notificationService.ShowWarning($"Data file moved to: {_pathProvider.GetDisplayPath()}\nCould not delete old AppData file: {ex.Message}", "Moved to Custom Location");
+                    }
+                }
+                
+                OnPropertyChanged(nameof(DataFileDisplayPath));
+            }
+            else
+            {
+                DialogHelper.ShowError("The selected folder is not valid or cannot be accessed.", "Invalid Path");
+            }
+        }
+        
+        private async Task MoveTo_AppData_From_Custom(string currentCustomPath)
+        {
+            // Get current data before switching
+            var currentData = await _dataRepository.GetAsync();
+            
+            // Reset to default AppData
+            await _pathProvider.ResetToDefaultPathAsync();
+            _configurationManager.CustomDataPath = null;
+            _dataRepository.InvalidateCache();
+            
+            // Save data to AppData location
+            if (currentData != null)
+            {
+                await _dataRepository.SaveAsync(currentData);
+                
+                // Delete from custom location
+                try
+                {
+                    if (File.Exists(currentCustomPath))
+                    {
+                        File.Delete(currentCustomPath);
+                    }
+                    _notificationService.ShowInfo($"Data file moved to: {_pathProvider.GetDisplayPath()}\nOld custom file deleted.", "Moved to Default Location");
+                }
+                catch (Exception ex)
+                {
+                    _notificationService.ShowWarning($"Data file moved to: {_pathProvider.GetDisplayPath()}\nCould not delete old custom file: {ex.Message}", "Moved to Default Location");
+                }
+            }
+            
+            OnPropertyChanged(nameof(DataFileDisplayPath));
+        }
+        
+        private async Task MoveTo_Custom_From_Custom(string newPath, string currentPath)
+        {
+            // Get current data before switching
+            var currentData = await _dataRepository.GetAsync();
+            
+            // Set new custom path
+            if (await _pathProvider.SetCustomDataPathAsync(newPath))
+            {
+                _configurationManager.CustomDataPath = newPath;
+                _dataRepository.InvalidateCache();
+                
+                // Save data to new custom location
+                if (currentData != null)
+                {
+                    await _dataRepository.SaveAsync(currentData);
+                    
+                    // Delete from old custom location
+                    try
+                    {
+                        if (File.Exists(currentPath))
+                        {
+                            File.Delete(currentPath);
+                        }
+                        _notificationService.ShowInfo($"Data file moved to: {_pathProvider.GetDisplayPath()}\nOld custom file deleted.", "Moved to New Custom Location");
+                    }
+                    catch (Exception ex)
+                    {
+                        _notificationService.ShowWarning($"Data file moved to: {_pathProvider.GetDisplayPath()}\nCould not delete old custom file: {ex.Message}", "Moved to New Custom Location");
+                    }
+                }
+                
+                OnPropertyChanged(nameof(DataFileDisplayPath));
+            }
+            else
+            {
+                DialogHelper.ShowError("The selected folder is not valid or cannot be accessed.", "Invalid Path");
+            }
         }
 
         private async void ExportData(object parameter)

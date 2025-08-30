@@ -41,7 +41,6 @@ namespace AccountManager.Infrastructure.Storage
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error writing file {filePath}: {ex.Message}");
                 return false;
             }
         }
@@ -68,7 +67,6 @@ namespace AccountManager.Infrastructure.Storage
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error creating directory {directoryPath}: {ex.Message}");
                 return false;
             }
         }

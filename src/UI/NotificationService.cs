@@ -2,6 +2,7 @@ using System.Windows;
 using AccountManager.Core.Interfaces;
 using AccountManager.Views.Components;
 using AccountManager.Views.Window.Content;
+using AccountManager.Core;
 
 namespace AccountManager.UI
 {
@@ -11,10 +12,29 @@ namespace AccountManager.UI
     public class NotificationService : INotificationService
     {
         private static NotificationService _instance;
+        private IConfigurationManager _configurationManager;
         
         public static NotificationService Instance => _instance ??= new NotificationService();
 
-        private NotificationService() { }
+        private NotificationService() 
+        {
+            // Don't initialize _configurationManager here to avoid circular dependency
+        }
+
+        private IConfigurationManager GetConfigurationManager()
+        {
+            if (_configurationManager == null)
+            {
+                _configurationManager = ServiceContainer.Instance.GetService<IConfigurationManager>();
+            }
+            return _configurationManager;
+        }
+
+        private bool AreNotificationsEnabled()
+        {
+            var configManager = GetConfigurationManager();
+            return configManager?.EnableApplicationNotifications ?? true;
+        }
 
         private ToastContainer GetToastContainer()
         {
@@ -45,6 +65,8 @@ namespace AccountManager.UI
 
         public void ShowInfo(string message, string title = "Information")
         {
+            if (!AreNotificationsEnabled()) return;
+
             Application.Current.Dispatcher.Invoke(() =>
             {
                 var toastContainer = GetToastContainer();
@@ -62,12 +84,14 @@ namespace AccountManager.UI
 
         public void ShowError(string message, string title = "Error")
         {
+            // Error messages always show regardless of notification settings
             Application.Current.Dispatcher.Invoke(() =>
             {
                 var toastContainer = GetToastContainer();
                 if (toastContainer != null)
                 {
-                    toastContainer.ShowToast(title, message, ToastNotification.ToastType.Error);
+                    // Error toasts don't auto-close, must be manually dismissed
+                    toastContainer.ShowToast(title, message, ToastNotification.ToastType.Error, false);
                 }
                 else
                 {
@@ -79,6 +103,8 @@ namespace AccountManager.UI
 
         public void ShowWarning(string message, string title = "Warning")
         {
+            if (!AreNotificationsEnabled()) return;
+
             Application.Current.Dispatcher.Invoke(() =>
             {
                 var toastContainer = GetToastContainer();
@@ -96,6 +122,8 @@ namespace AccountManager.UI
 
         public void ShowSuccess(string message, string title = "Success")
         {
+            if (!AreNotificationsEnabled()) return;
+
             Application.Current.Dispatcher.Invoke(() =>
             {
                 var toastContainer = GetToastContainer();

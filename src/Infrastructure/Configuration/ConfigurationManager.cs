@@ -1,8 +1,10 @@
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using AccountManager.Core;
 using AccountManager.Core.Interfaces;
 using AccountManager.Models;
+using AccountManager.Repositories;
 
 namespace AccountManager.Infrastructure.Configuration
 {
@@ -22,6 +24,13 @@ namespace AccountManager.Infrastructure.Configuration
         public ConfigurationManager(IRepository<AppData> dataRepository)
         {
             _dataRepository = dataRepository ?? throw new ArgumentNullException(nameof(dataRepository));
+            
+            // Subscribe to data changes to reload settings when data is imported/changed
+            if (_dataRepository is AppDataRepository appDataRepository)
+            {
+                appDataRepository.DataChanged += OnDataChanged;
+            }
+            
             LoadSettings();
         }
 
@@ -77,6 +86,20 @@ namespace AccountManager.Infrastructure.Configuration
                 if (_settings != null && _settings.EnableLocalSearch != value)
                 {
                     _settings.EnableLocalSearch = value;
+                    SaveSettings();
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public bool EnableApplicationNotifications
+        {
+            get => _settings?.EnableApplicationNotifications ?? true;
+            set
+            {
+                if (_settings != null && _settings.EnableApplicationNotifications != value)
+                {
+                    _settings.EnableApplicationNotifications = value;
                     SaveSettings();
                     OnPropertyChanged();
                 }
@@ -222,11 +245,16 @@ namespace AccountManager.Infrastructure.Configuration
                 var data = await _dataRepository.GetAsync();
                 _settings = data?.Settings ?? new AppSettings();
                 OnPropertyChanged(string.Empty);
-                System.Diagnostics.Debug.WriteLine("Settings loaded successfully");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading settings: {ex.Message}");
+                // Try to show error notification, but don't fail if NotificationService isn't available
+                try
+                {
+                    var notificationService = ServiceContainer.Instance.NotificationService;
+                    notificationService?.ShowError($"Error loading settings: {ex.Message}", "Settings Error");
+                }
+                catch { } // Prevent recursive errors during initialization
                 _settings = new AppSettings();
             }
         }
@@ -240,12 +268,17 @@ namespace AccountManager.Infrastructure.Configuration
                 {
                     data.Settings = _settings;
                     await _dataRepository.SaveAsync(data);
-                    System.Diagnostics.Debug.WriteLine("Settings saved successfully");
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error saving settings: {ex.Message}");
+                // Try to show error notification
+                try
+                {
+                    var notificationService = ServiceContainer.Instance.NotificationService;
+                    notificationService?.ShowError($"Error saving settings: {ex.Message}", "Save Settings Error");
+                }
+                catch { } // Prevent recursive errors
             }
         }
 
@@ -270,6 +303,31 @@ namespace AccountManager.Infrastructure.Configuration
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        /// <summary>
+        /// Handle data changes from repository (e.g., import operations)
+        /// </summary>
+        private void OnDataChanged(object sender, AppData newData)
+        {
+            try
+            {
+                // Reload settings when data changes (e.g., after import) - ensure we're on the UI thread
+                System.Windows.Application.Current?.Dispatcher.BeginInvoke(new System.Action(() =>
+                {
+                    LoadSettings();
+                }));
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the settings system
+                try
+                {
+                    var notificationService = ServiceContainer.Instance.NotificationService;
+                    notificationService?.ShowError($"Error reloading settings after data change: {ex.Message}", "Settings Reload Error");
+                }
+                catch { }
+            }
         }
     }
 }

@@ -7,7 +7,6 @@
              xmlns:contentViews="clr-namespace:AccountManager.Views.Window.Content"
              xmlns:searchViews="clr-namespace:AccountManager.Views.Window.Search"
              xmlns:controlsViews="clr-namespace:AccountManager.Views.Window.Controls"
-             xmlns:notificationsViews="clr-namespace:AccountManager.Views.Window.Notifications"
              xmlns:components="clr-namespace:AccountManager.Views.Components"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -72,8 +71,6 @@
                     </Grid>
                 </Border>
                 
-                <!-- Error Alert -->
-                <notificationsViews:ErrorAlert Grid.Row="1" />
 
                 <!-- Main Content Area -->
                 <Grid Grid.Row="2" Background="{DynamicResource MainBackgroundColor}"

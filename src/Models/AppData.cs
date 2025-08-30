@@ -191,6 +191,7 @@ namespace AccountManager.Models
                 CensorPassword = this.Settings.CensorPassword,
                 EnableEncryption = this.Settings.EnableEncryption,
                 EnableLocalSearch = this.Settings.EnableLocalSearch,
+                EnableApplicationNotifications = this.Settings.EnableApplicationNotifications,
                 ConfirmAccountDelete = this.Settings.ConfirmAccountDelete,
                 ConfirmGroupDelete = this.Settings.ConfirmGroupDelete,
                 ConfirmArchiveAccount = this.Settings.ConfirmArchiveAccount,
@@ -266,6 +267,7 @@ namespace AccountManager.Models
         public bool CensorPassword { get; set; } = AppConfig.Defaults.CensorPassword;
         public bool EnableEncryption { get; set; } = AppConfig.Defaults.EnableEncryption;
         public bool EnableLocalSearch { get; set; } = AppConfig.Defaults.EnableLocalSearch;
+        public bool EnableApplicationNotifications { get; set; } = AppConfig.Defaults.EnableApplicationNotifications;
         public bool ConfirmAccountDelete { get; set; } = AppConfig.Defaults.ConfirmAccountDelete;
         public bool ConfirmGroupDelete { get; set; } = AppConfig.Defaults.ConfirmGroupDelete;
         public bool ConfirmArchiveAccount { get; set; } = AppConfig.Defaults.ConfirmArchiveAccount;

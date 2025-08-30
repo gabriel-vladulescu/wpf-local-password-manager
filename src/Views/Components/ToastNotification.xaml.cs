@@ -9,6 +9,8 @@ namespace AccountManager.Views.Components
     public partial class ToastNotification : UserControl
     {
         private DispatcherTimer _autoCloseTimer;
+        private bool _isClosing;
+        private bool _autoCloseEnabled = true;
         
         public event EventHandler Closed;
 
@@ -32,50 +34,102 @@ namespace AccountManager.Views.Components
             var slideIn = (Storyboard)Resources["SlideInAnimation"];
             slideIn.Begin();
             
-            // Auto-close timer
-            _autoCloseTimer = new DispatcherTimer
+            // Start progress bar animation if auto-close is enabled
+            if (_autoCloseEnabled)
             {
-                Interval = TimeSpan.FromSeconds(4)
-            };
-            _autoCloseTimer.Tick += (s, args) => Close();
-            _autoCloseTimer.Start();
+                var progressAnimation = (Storyboard)Resources["ProgressBarAnimation"];
+                progressAnimation.Begin();
+                
+                // Auto-close timer
+                _autoCloseTimer = new DispatcherTimer
+                {
+                    Interval = TimeSpan.FromSeconds(4)
+                };
+                _autoCloseTimer.Tick += (s, args) => Close();
+                _autoCloseTimer.Start();
+            }
         }
 
-        public void SetContent(string title, string message, ToastType type)
+        public void SetContent(string title, string message, ToastType type, bool autoClose = true)
         {
             ToastTitle.Text = title;
             ToastMessage.Text = message;
+            _autoCloseEnabled = autoClose;
             
             // Set icon and colors based on type
             switch (type)
             {
                 case ToastType.Info:
                     ToastIcon.Kind = MaterialDesignThemes.Wpf.PackIconKind.Information;
-                    ToastIcon.SetResourceReference(ForegroundProperty, "PrimaryColor");
+                    ToastIcon.SetResourceReference(Control.ForegroundProperty, "PrimaryColor");
+                    ProgressBar.SetResourceReference(Border.BackgroundProperty, "PrimaryColor");
                     break;
                 case ToastType.Success:
                     ToastIcon.Kind = MaterialDesignThemes.Wpf.PackIconKind.CheckCircle;
-                    ToastIcon.SetResourceReference(ForegroundProperty, "SuccessColor");
+                    ToastIcon.SetResourceReference(Control.ForegroundProperty, "SuccessColor");
+                    ProgressBar.SetResourceReference(Border.BackgroundProperty, "SuccessColor");
                     break;
                 case ToastType.Warning:
                     ToastIcon.Kind = MaterialDesignThemes.Wpf.PackIconKind.AlertCircle;
-                    ToastIcon.SetResourceReference(ForegroundProperty, "WarningColor");
+                    ToastIcon.SetResourceReference(Control.ForegroundProperty, "WarningColor");
+                    ProgressBar.SetResourceReference(Border.BackgroundProperty, "WarningColor");
                     break;
                 case ToastType.Error:
                     ToastIcon.Kind = MaterialDesignThemes.Wpf.PackIconKind.CloseCircle;
-                    ToastIcon.SetResourceReference(ForegroundProperty, "DangerColor");
+                    ToastIcon.SetResourceReference(Control.ForegroundProperty, "DangerColor");
+                    ProgressBar.SetResourceReference(Border.BackgroundProperty, "DangerColor");
+                    // Errors don't auto-close by default
+                    _autoCloseEnabled = false;
                     break;
+            }
+            
+            // Hide progress bar if auto-close is disabled
+            if (!_autoCloseEnabled)
+            {
+                ProgressBar.Visibility = System.Windows.Visibility.Collapsed;
             }
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
+            e.Handled = true; // Prevent event bubbling
             Close();
+        }
+
+        private void ToastCard_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            // Only close on card click, not close button click
+            if (e.OriginalSource != CloseButton && !IsDescendantOf(e.OriginalSource as DependencyObject, CloseButton))
+            {
+                Close();
+            }
+        }
+
+        private bool IsDescendantOf(DependencyObject child, DependencyObject parent)
+        {
+            if (child == null || parent == null) return false;
+            if (child == parent) return true;
+            
+            var parentOfChild = System.Windows.Media.VisualTreeHelper.GetParent(child);
+            return IsDescendantOf(parentOfChild, parent);
         }
 
         private void Close()
         {
+            if (_isClosing) return;
+            _isClosing = true;
+            
             _autoCloseTimer?.Stop();
+            
+            // Stop the progress bar animation immediately
+            var progressAnimation = (Storyboard)Resources["ProgressBarAnimation"];
+            progressAnimation.Stop();
+            
+            // Reset progress bar to 0 when closing
+            if (ProgressBarTransform != null)
+            {
+                ProgressBarTransform.ScaleX = 0;
+            }
             
             var slideOut = (Storyboard)Resources["SlideOutAnimation"];
             slideOut.Completed += (s, e) => 
@@ -83,13 +137,6 @@ namespace AccountManager.Views.Components
                 Closed?.Invoke(this, EventArgs.Empty);
             };
             slideOut.Begin();
-        }
-
-        protected override void OnMouseLeftButtonDown(System.Windows.Input.MouseButtonEventArgs e)
-        {
-            base.OnMouseLeftButtonDown(e);
-            // Close on click
-            Close();
         }
     }
 }

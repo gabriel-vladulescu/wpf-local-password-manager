@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using AccountManager.Core.Interfaces;
 using AccountManager.Infrastructure.Storage;
 using AccountManager.Infrastructure.Serialization;
@@ -63,12 +64,36 @@ namespace AccountManager.Core
                 ImportExportManager = new ImportExportManager(DataRepository, DialogManager, NotificationService);
                 ConfigurationManager = new ConfigurationManager(DataRepository);
 
-                System.Diagnostics.Debug.WriteLine("ServiceContainer initialized successfully");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error initializing ServiceContainer: {ex.Message}");
+                // Show critical error if notification service is available
+                try
+                {
+                    NotificationService?.ShowError($"Critical error initializing application: {ex.Message}", "Initialization Error");
+                }
+                catch { } // Prevent recursive errors
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// Completes async initialization after core services are created
+        /// </summary>
+        public async Task CompleteInitializationAsync()
+        {
+            try
+            {
+                // Load custom data path configuration
+                await PathProvider.LoadCustomDataPathAsync();
+            }
+            catch (Exception ex)
+            {
+                try
+                {
+                    NotificationService?.ShowError($"Error completing initialization: {ex.Message}", "Initialization Error");
+                }
+                catch { }
             }
         }
 
@@ -76,19 +101,19 @@ namespace AccountManager.Core
         /// Initializes the path provider with custom path from settings
         /// Called after configuration is loaded
         /// </summary>
-        public void InitializeCustomPath()
+        public async Task InitializeCustomPathAsync()
         {
             try
             {
                 var customPath = ConfigurationManager.CustomDataPath;
                 if (!string.IsNullOrEmpty(customPath))
                 {
-                    PathProvider.SetCustomDataPath(customPath);
+                    await PathProvider.SetCustomDataPathAsync(customPath);
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error initializing custom path: {ex.Message}");
+                NotificationService?.ShowError($"Error setting custom data path: {ex.Message}", "Configuration Error");
             }
         }
 

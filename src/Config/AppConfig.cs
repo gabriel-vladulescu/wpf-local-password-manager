@@ -36,7 +36,8 @@ namespace AccountManager.Config
             public const bool CensorAccountData = false;
             public const bool CensorPassword = true;
             public const bool EnableEncryption = false;
-            public const bool EnableLocalSearch = true;
+            public const bool EnableLocalSearch = false;
+            public const bool EnableApplicationNotifications = true;
             public const bool ConfirmAccountDelete = true;
             public const bool ConfirmGroupDelete = true;
             public const bool ConfirmArchiveAccount = true;

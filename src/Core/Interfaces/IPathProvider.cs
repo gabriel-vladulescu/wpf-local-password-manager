@@ -1,3 +1,5 @@
+using System.Threading.Tasks;
+
 namespace AccountManager.Core.Interfaces
 {
     /// <summary>
@@ -8,8 +10,9 @@ namespace AccountManager.Core.Interfaces
         string GetDefaultDataPath();
         string GetCurrentDataPath();
         string GetCustomDataPath();
-        bool SetCustomDataPath(string path);
-        void ResetToDefaultPath();
+        Task<bool> SetCustomDataPathAsync(string path);
+        Task ResetToDefaultPathAsync();
+        Task LoadCustomDataPathAsync();
         bool IsUsingDefaultPath();
         string GetDisplayPath();
         string GetDataDirectory();

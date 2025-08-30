@@ -23,6 +23,7 @@ namespace AccountManager.ViewModels
         private readonly ThemeManager _themeManager;
         private readonly IConfigurationManager _configurationManager;
         private readonly IDialogManager _dialogManager;
+        private readonly INotificationService _notificationService;
 
         // Events for communication with MainViewModel
         public event EventHandler<GroupSelectionEventArgs> GroupSelectionChanged;
@@ -93,6 +94,7 @@ namespace AccountManager.ViewModels
             _themeManager = serviceContainer.ThemeManager;
             _configurationManager = serviceContainer.ConfigurationManager;
             _dialogManager = serviceContainer.DialogManager;
+            _notificationService = serviceContainer.NotificationService;
 
             InitializeCommands();
         }
@@ -433,8 +435,7 @@ namespace AccountManager.ViewModels
         {
             if (!TrashedAccounts.Any())
             {
-                MessageBox.Show("Trash is already empty.", "Empty Trash", 
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                _notificationService.ShowInfo("Trash is already empty.", "Empty Trash");
                 return;
             }
 
@@ -445,6 +446,8 @@ namespace AccountManager.ViewModels
 
             if (result == true && confirmDialog.ViewModel.Result)
             {
+                var deletedCount = TrashedAccounts.Count;
+                
                 // Permanently delete all trashed accounts
                 foreach (var account in TrashedAccounts.ToList())
                 {
@@ -456,6 +459,9 @@ namespace AccountManager.ViewModels
                 SaveData();
                 UpdateCounts();
                 DataChanged?.Invoke(this, EventArgs.Empty);
+                
+                // Show success notification
+                _notificationService.ShowSuccess($"{deletedCount} {(deletedCount == 1 ? "account" : "accounts")} permanently deleted", "Trash Emptied");
             }
         }
 
@@ -541,13 +547,15 @@ namespace AccountManager.ViewModels
                         SaveData();
                         UpdateCounts();
                         DataChanged?.Invoke(this, EventArgs.Empty);
+                        
+                        // Show success notification
+                        _notificationService.ShowSuccess($"Group '{newGroup.Name}' has been created successfully.", "Group Created");
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error adding group: {ex.Message}", "Error", MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                _notificationService.ShowError($"Error adding group: {ex.Message}", "Error");
             }
         }
 
@@ -567,12 +575,14 @@ namespace AccountManager.ViewModels
                     dialog.ViewModel.ApplyChanges();
                     SaveData();
                     DataChanged?.Invoke(this, EventArgs.Empty);
+                    
+                    // Show success notification
+                    _notificationService.ShowSuccess($"Group '{group.Name}' has been updated successfully.", "Group Updated");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error editing group: {ex.Message}", "Error", MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                _notificationService.ShowError($"Error editing group: {ex.Message}", "Error");
             }
         }
 
@@ -605,11 +615,13 @@ namespace AccountManager.ViewModels
                 SaveData();
                 UpdateCounts();
                 DataChanged?.Invoke(this, EventArgs.Empty);
+                
+                // Show success notification
+                _notificationService.ShowSuccess($"Group '{group.Name}' has been deleted successfully.", "Group Deleted");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error deleting group: {ex.Message}", "Error", MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                _notificationService.ShowError($"Error deleting group: {ex.Message}", "Error");
             }
         }
 
@@ -622,8 +634,7 @@ namespace AccountManager.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving data: {ex.Message}", "Save Error", MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                _notificationService.ShowError($"Error saving data: {ex.Message}", "Save Error");
             }
         }
 

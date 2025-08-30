@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using AccountManager.Core;
 using AccountManager.Core.Interfaces;
 using AccountManager.Models;
 
@@ -34,14 +35,19 @@ namespace AccountManager.Repositories
                     // Ensure data integrity
                     _cachedData?.Validate();
                     
-                    System.Diagnostics.Debug.WriteLine("AppData loaded from repository");
                 }
                 
                 return _cachedData;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading AppData: {ex.Message}");
+                // Show error notification for data loading issues
+                try
+                {
+                    var notificationService = ServiceContainer.Instance.NotificationService;
+                    notificationService?.ShowError($"Error loading data: {ex.Message}", "Data Load Error");
+                }
+                catch { } // Prevent recursive errors
                 _cachedData = new AppData();
                 return _cachedData;
             }
@@ -61,14 +67,19 @@ namespace AccountManager.Repositories
                 {
                     _cachedData = entity;
                     DataChanged?.Invoke(this, entity);
-                    System.Diagnostics.Debug.WriteLine("AppData saved to repository");
                 }
                 
                 return success;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error saving AppData: {ex.Message}");
+                // Show error notification for data saving issues
+                try
+                {
+                    var notificationService = ServiceContainer.Instance.NotificationService;
+                    notificationService?.ShowError($"Error saving data: {ex.Message}", "Data Save Error");
+                }
+                catch { } // Prevent recursive errors
                 return false;
             }
         }
@@ -97,13 +108,11 @@ namespace AccountManager.Repositories
                 if (importedData != null)
                 {
                     importedData.Validate();
-                    System.Diagnostics.Debug.WriteLine($"Data imported successfully from {filePath}");
                 }
                 return importedData;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error importing data from {filePath}: {ex.Message}");
                 throw;
             }
         }
@@ -122,13 +131,11 @@ namespace AccountManager.Repositories
                 var success = await _serializer.SerializeAsync(data, filePath);
                 if (success)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Data exported successfully to {filePath}");
                 }
                 return success;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error exporting data to {filePath}: {ex.Message}");
                 return false;
             }
         }

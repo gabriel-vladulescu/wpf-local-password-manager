@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using AccountManager.Config;
+using AccountManager.Core;
 using AccountManager.Core.Interfaces;
 using AccountManager.Models;
 using AccountManager.Repositories;
@@ -25,6 +26,9 @@ namespace AccountManager.Managers
         {
             _dataRepository = dataRepository ?? throw new ArgumentNullException(nameof(dataRepository));
             // Don't auto-load theme in constructor - let caller control when to initialize
+            
+            // Subscribe to data changes to reload theme when data is imported/changed
+            _dataRepository.DataChanged += OnDataChanged;
         }
 
         /// <summary>
@@ -50,7 +54,13 @@ namespace AccountManager.Managers
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading theme: {ex.Message}");
+                // Show error notification for theme loading issues
+                try
+                {
+                    var notificationService = ServiceContainer.Instance.NotificationService;
+                    notificationService?.ShowError($"Error loading theme: {ex.Message}", "Theme Error");
+                }
+                catch { } // Prevent recursive errors
                 _currentTheme = new ThemeSettings();
                 await ApplyThemeAsync("Light"); // Default to Light theme
             }
@@ -82,7 +92,6 @@ namespace AccountManager.Managers
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error setting theme: {ex.Message}");
                 return false;
             }
         }
@@ -129,7 +138,6 @@ namespace AccountManager.Managers
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Error applying theme: {ex.Message}");
                 }
             });
         }
@@ -261,6 +269,31 @@ namespace AccountManager.Managers
             app.Resources["SuccessColor"] = ColorConstants.ToBrush(ColorConstants.Common.Success);
             app.Resources["DangerColor"] = ColorConstants.ToBrush(ColorConstants.Common.Danger);
             app.Resources["WarningColor"] = ColorConstants.ToBrush(ColorConstants.Common.Warning);
+        }
+
+        /// <summary>
+        /// Handle data changes from repository (e.g., import operations)
+        /// </summary>
+        private async void OnDataChanged(object sender, AppData newData)
+        {
+            try
+            {
+                // Reload theme when data changes (e.g., after import) - ensure we're on the UI thread
+                await Application.Current?.Dispatcher.InvokeAsync(async () =>
+                {
+                    await LoadThemeAsync();
+                });
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the theme system
+                try
+                {
+                    var notificationService = ServiceContainer.Instance.NotificationService;
+                    notificationService?.ShowError($"Error reloading theme after data change: {ex.Message}", "Theme Reload Error");
+                }
+                catch { }
+            }
         }
     }
 }
