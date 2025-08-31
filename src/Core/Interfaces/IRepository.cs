@@ -13,6 +13,7 @@ namespace AccountManager.Core.Interfaces
         Task<T> GetAsync();
         Task<bool> SaveAsync(T entity);
         Task<bool> ExistsAsync();
+        void InvalidateCache();
         event EventHandler<T> DataChanged;
     }
 }

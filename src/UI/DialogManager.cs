@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -45,27 +46,80 @@ namespace AccountManager.UI
 
         private void TryFindDialogComponents()
         {
-            if (_mainWindow == null) return;
+            System.Diagnostics.Debug.WriteLine("DialogManager: TryFindDialogComponents called");
+            
+            if (_mainWindow == null) 
+            {
+                System.Diagnostics.Debug.WriteLine("DialogManager: MainWindow is null");
+                return;
+            }
             
             // Find the dialog overlay components
             var appLayout = FindVisualChild<Views.Window.Content.AppLayout>(_mainWindow);
+            System.Diagnostics.Debug.WriteLine($"DialogManager: AppLayout found: {appLayout != null}");
+            
             if (appLayout != null)
             {
                 _overlay = appLayout.FindName("DialogOverlayGrid") as Grid;
                 _content = appLayout.FindName("DialogContent") as ContentPresenter;
+                System.Diagnostics.Debug.WriteLine($"DialogManager: Components found - _overlay: {_overlay != null}, _content: {_content != null}");
+                
+                // If components are still not found, try again after a short delay
+                if (_overlay == null || _content == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("DialogManager: Components not found, scheduling retry");
+                    Application.Current.Dispatcher.BeginInvoke(new Action(() => {
+                        System.Diagnostics.Debug.WriteLine("DialogManager: Retrying component search");
+                        var retryOverlay = appLayout.FindName("DialogOverlayGrid") as Grid;
+                        var retryContent = appLayout.FindName("DialogContent") as ContentPresenter;
+                        
+                        if (retryOverlay != null && retryContent != null)
+                        {
+                            _overlay = retryOverlay;
+                            _content = retryContent;
+                            System.Diagnostics.Debug.WriteLine("DialogManager: Components found on retry");
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine("DialogManager: Components still not found on retry");
+                        }
+                    }), System.Windows.Threading.DispatcherPriority.Loaded);
+                }
             }
+        }
+
+        private async Task EnsureDialogComponentsAsync()
+        {
+            int retryCount = 0;
+            const int maxRetries = 5;
+            const int delayMs = 100;
+
+            while ((_overlay == null || _content == null) && retryCount < maxRetries)
+            {
+                System.Diagnostics.Debug.WriteLine($"DialogManager: EnsureDialogComponentsAsync attempt {retryCount + 1}");
+                
+                TryFindDialogComponents();
+                
+                if (_overlay == null || _content == null)
+                {
+                    await Task.Delay(delayMs);
+                    retryCount++;
+                }
+            }
+            
+            System.Diagnostics.Debug.WriteLine($"DialogManager: EnsureDialogComponentsAsync completed after {retryCount + 1} attempts. Found: _overlay={_overlay != null}, _content={_content != null}");
         }
 
         public async Task<bool?> ShowDialogAsync(UserControl dialog)
         {
-            // Try one more time to find components if they're not found
-            if (_overlay == null || _content == null)
-            {
-                TryFindDialogComponents();
-            }
+            System.Diagnostics.Debug.WriteLine($"DialogManager: ShowDialogAsync called with dialog type: {dialog?.GetType().Name}");
+            
+            // Try to find components with retries if they're not found
+            await EnsureDialogComponentsAsync();
             
             if (_overlay == null || _content == null)
             {
+                System.Diagnostics.Debug.WriteLine($"DialogManager: Components still null after retries - _overlay: {_overlay != null}, _content: {_content != null}");
                 return false;
             }
 
@@ -102,6 +156,9 @@ namespace AccountManager.UI
                     break;
                 case ConfirmationDialog confirmDialog:
                     confirmDialog.DialogClosed += (s, e) => tcs.TrySetResult(confirmDialog.DialogResult);
+                    break;
+                case PassphraseDialog passphraseDialog:
+                    passphraseDialog.DialogClosed += (s, e) => tcs.TrySetResult(passphraseDialog.DialogResult);
                     break;
                 case SettingsDialog settingsDialog:
                     SetupSettingsDialogHandlers(settingsDialog, tcs);
@@ -339,5 +396,6 @@ namespace AccountManager.UI
             }
             return null;
         }
+
     }
 }

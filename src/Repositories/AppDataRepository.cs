@@ -39,9 +39,16 @@ namespace AccountManager.Repositories
                 
                 return _cachedData;
             }
+            catch (Exception ex) when (ex.Message.Contains("No passphrase available"))
+            {
+                // Encryption not ready yet - return default data without showing error
+                System.Diagnostics.Debug.WriteLine("AppDataRepository: Encryption not ready, using default data");
+                _cachedData = new AppData();
+                return _cachedData;
+            }
             catch (Exception ex)
             {
-                // Show error notification for data loading issues
+                // Show error notification for real data loading issues
                 try
                 {
                     var notificationService = ServiceContainer.Instance.NotificationService;

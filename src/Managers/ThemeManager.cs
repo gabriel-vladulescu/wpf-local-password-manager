@@ -40,13 +40,35 @@ namespace AccountManager.Managers
             await LoadThemeAsync();
         }
 
+        /// <summary>
+        /// Reloads theme after encryption is available
+        /// </summary>
+        public async Task ReloadThemeAfterEncryptionAsync()
+        {
+            await LoadThemeAsync();
+        }
+
         public string CurrentTheme => _currentTheme?.CurrentTheme ?? "Light";
 
         public async Task LoadThemeAsync()
         {
             try
             {
-                var data = await _dataRepository.GetAsync();
+                // Try to get data, but if encryption is not ready yet, use default theme
+                AppData data = null;
+                try
+                {
+                    data = await _dataRepository.GetAsync();
+                }
+                catch (Exception dataEx) when (dataEx.Message.Contains("No passphrase available"))
+                {
+                    // Encryption not ready yet - use default theme
+                    System.Diagnostics.Debug.WriteLine("ThemeManager: Encryption not ready, using default theme");
+                    _currentTheme = new ThemeSettings();
+                    await ApplyThemeAsync(CurrentTheme);
+                    return;
+                }
+                
                 _currentTheme = data?.Theme ?? new ThemeSettings();
                 
                 // Apply the loaded theme to the application

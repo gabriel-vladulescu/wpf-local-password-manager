@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using AccountManager.Core;
 using AccountManager.Core.Interfaces;
 using AccountManager.Models;
@@ -14,6 +15,7 @@ namespace AccountManager.Infrastructure.Configuration
     public class ConfigurationManager : IConfigurationManager
     {
         private readonly IRepository<AppData> _dataRepository;
+        private readonly IEncryptionConfigManager _encryptionConfigManager;
         private AppSettings _settings;
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -21,9 +23,10 @@ namespace AccountManager.Infrastructure.Configuration
         public event Action<bool> ArchiveSettingChanged;
         public event Action<bool> FavoritesVisibilityChanged;
 
-        public ConfigurationManager(IRepository<AppData> dataRepository)
+        public ConfigurationManager(IRepository<AppData> dataRepository, IEncryptionConfigManager encryptionConfigManager = null)
         {
             _dataRepository = dataRepository ?? throw new ArgumentNullException(nameof(dataRepository));
+            _encryptionConfigManager = encryptionConfigManager; // Can be null now since we store encryption settings in AppConfig
             
             // Subscribe to data changes to reload settings when data is imported/changed
             if (_dataRepository is AppDataRepository appDataRepository)
@@ -31,7 +34,7 @@ namespace AccountManager.Infrastructure.Configuration
                 appDataRepository.DataChanged += OnDataChanged;
             }
             
-            LoadSettings();
+            // Note: LoadSettings() will be called manually after encryption is ready
         }
 
         // Privacy & Security Settings
@@ -238,11 +241,39 @@ namespace AccountManager.Infrastructure.Configuration
             }
         }
 
+
         public async void LoadSettings()
+        {
+            await LoadSettingsAsync();
+        }
+
+        /// <summary>
+        /// Reloads settings after encryption is available
+        /// </summary>
+        public async Task ReloadSettingsAfterEncryptionAsync()
+        {
+            await LoadSettingsAsync();
+        }
+
+        private async Task LoadSettingsAsync()
         {
             try
             {
-                var data = await _dataRepository.GetAsync();
+                // Try to get data, but if encryption is not ready yet, use default settings
+                AppData data = null;
+                try
+                {
+                    data = await _dataRepository.GetAsync();
+                }
+                catch (Exception dataEx) when (dataEx.Message.Contains("No passphrase available"))
+                {
+                    // Encryption not ready yet - use default settings
+                    System.Diagnostics.Debug.WriteLine("ConfigurationManager: Encryption not ready, using default settings");
+                    _settings = new AppSettings();
+                    OnPropertyChanged(string.Empty);
+                    return;
+                }
+                
                 _settings = data?.Settings ?? new AppSettings();
                 OnPropertyChanged(string.Empty);
             }

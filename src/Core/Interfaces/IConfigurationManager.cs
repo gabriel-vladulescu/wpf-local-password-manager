@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Threading.Tasks;
 using AccountManager.Models;
 
 namespace AccountManager.Core.Interfaces
@@ -33,6 +34,7 @@ namespace AccountManager.Core.Interfaces
         // Data File Settings
         string CustomDataPath { get; set; }
 
+
         // Events
         event Action<bool> TrashSettingChanged;
         event Action<bool> ArchiveSettingChanged;
@@ -40,6 +42,7 @@ namespace AccountManager.Core.Interfaces
 
         // Methods
         void LoadSettings();
+        Task ReloadSettingsAfterEncryptionAsync();
         void SaveSettings();
         void ResetToDefaults();
     }

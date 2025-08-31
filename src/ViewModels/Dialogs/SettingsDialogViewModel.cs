@@ -7,6 +7,7 @@ using AccountManager.Core.Interfaces;
 using AccountManager.Managers;
 using AccountManager.Repositories;
 using AccountManager.Utilities.Helpers;
+using AccountManager.Config;
 
 namespace AccountManager.ViewModels
 {
@@ -17,6 +18,9 @@ namespace AccountManager.ViewModels
         private readonly ImportExportManager _importExportManager;
         private readonly INotificationService _notificationService;
         private readonly AppDataRepository _dataRepository;
+        private readonly IEncryptionService _encryptionService;
+        private readonly IDialogManager _dialogManager;
+        private readonly IEncryptionConfigManager _encryptionConfigManager;
 
         // Privacy & Security Settings
         public bool CensorAccountData
@@ -31,10 +35,11 @@ namespace AccountManager.ViewModels
             set => _configurationManager.CensorPassword = value;
         }
 
+        private bool _enableEncryption;
         public bool EnableEncryption
         {
-            get => _configurationManager.EnableEncryption;
-            set => _configurationManager.EnableEncryption = value;
+            get => _enableEncryption;
+            set => HandleEncryptionToggle(value);
         }
 
         // Data Management Settings
@@ -116,6 +121,9 @@ namespace AccountManager.ViewModels
             _importExportManager = serviceContainer.ImportExportManager;
             _notificationService = serviceContainer.NotificationService;
             _dataRepository = serviceContainer.DataRepository;
+            _encryptionService = serviceContainer.EncryptionService;
+            _dialogManager = serviceContainer.DialogManager;
+            _encryptionConfigManager = serviceContainer.EncryptionConfigManager;
             
             InitializeCommands();
             
@@ -139,8 +147,11 @@ namespace AccountManager.ViewModels
             ExportDataCommand = new RelayCommand(ExportData);
         }
 
-        public void InitializeForView()
+        public async void InitializeForView()
         {
+            // Load encryption status from file content
+            _enableEncryption = await _encryptionConfigManager.IsEncryptionEnabledAsync();
+            
             // Refresh all property bindings
             OnPropertyChanged(string.Empty);
         }
@@ -370,6 +381,151 @@ namespace AccountManager.ViewModels
         private async void ExportData(object parameter)
         {
             await _importExportManager.ExportDataAsync();
+        }
+
+        private async void HandleEncryptionToggle(bool enableEncryption)
+        {
+            var currentValue = await _encryptionConfigManager.IsEncryptionEnabledAsync();
+            
+            if (currentValue == enableEncryption)
+                return; // No change needed
+
+            if (enableEncryption)
+            {
+                // User wants to enable encryption - show passphrase dialog
+                await EnableEncryptionAsync();
+            }
+            else
+            {
+                // User wants to disable encryption - confirm and disable
+                await DisableEncryptionAsync();
+            }
+
+            // Refresh encryption status from file content and UI binding
+            _enableEncryption = await _encryptionConfigManager.IsEncryptionEnabledAsync();
+            OnPropertyChanged(nameof(EnableEncryption));
+        }
+
+        private async Task EnableEncryptionAsync()
+        {
+            try
+            {
+                // Show passphrase dialog for new encryption
+                var passphraseDialog = new Views.Dialogs.PassphraseDialog();
+                passphraseDialog.SetupForNewEncryption();
+
+                var result = await _dialogManager.ShowDialogAsync(passphraseDialog);
+                
+                if (result == true)
+                {
+                    var passphrase = passphraseDialog.GetPassphrase();
+                    if (!string.IsNullOrEmpty(passphrase))
+                    {
+                        // Encryption will be enabled by immediately encrypting the file
+                        // No config storage needed - encryption state detected from file content
+
+                        // Set passphrase in encrypted serializer for immediate encryption
+                        var encryptedSerializer = ServiceContainer.Instance.GetEncryptedSerializer();
+                        if (encryptedSerializer != null)
+                        {
+                            encryptedSerializer.SetPassphrase(passphrase);
+                            
+                            // Immediately encrypt the current data
+                            await EncryptExistingDataAsync();
+                            
+                            _notificationService.ShowSuccess("Encryption has been enabled. Your accounts file is now encrypted.", "Encryption Enabled");
+                        }
+                        else
+                        {
+                            _notificationService.ShowSuccess("Encryption has been enabled. Your accounts file will be encrypted on the next save.", "Encryption Enabled");
+                        }
+                    }
+                    else
+                    {
+                        _notificationService.ShowWarning("Encryption setup was cancelled.", "Setup Cancelled");
+                    }
+                }
+
+                // Clear sensitive data
+                passphraseDialog.ClearPasswords();
+            }
+            catch (Exception ex)
+            {
+                _notificationService.ShowError($"Failed to enable encryption: {ex.Message}", "Encryption Error");
+            }
+        }
+
+        private async Task DisableEncryptionAsync()
+        {
+            try
+            {
+                // Show confirmation dialog
+                var confirmDialog = new Views.Dialogs.ConfirmationDialog();
+                var viewModel = new ConfirmationDialogViewModel();
+                viewModel.SetupForGenericAction(
+                    "Disable Encryption",
+                    "Are you sure you want to disable encryption? Your accounts file will be saved without encryption.",
+                    "Disable"
+                );
+                confirmDialog.DataContext = viewModel;
+
+                var result = await _dialogManager.ShowDialogAsync(confirmDialog);
+                
+                if (result == true)
+                {
+                    // Clear passphrase from serializer first
+                    var encryptedSerializer = ServiceContainer.Instance.GetEncryptedSerializer();
+                    encryptedSerializer?.ClearPassphrase();
+                    
+                    // Encryption will be disabled by immediately decrypting the file
+                    // No config storage needed - encryption state detected from file content
+
+                    // Immediately decrypt and save the data in unencrypted format
+                    await DecryptExistingDataAsync();
+
+                    _notificationService.ShowInfo("Encryption has been disabled. Your accounts file is now saved without encryption.", "Encryption Disabled");
+                }
+            }
+            catch (Exception ex)
+            {
+                _notificationService.ShowError($"Failed to disable encryption: {ex.Message}", "Encryption Error");
+            }
+        }
+
+        private async Task EncryptExistingDataAsync()
+        {
+            try
+            {
+                // Get the current data
+                var currentData = await _dataRepository.GetAsync();
+                if (currentData != null)
+                {
+                    // Save it again - this will now be encrypted since encryption is enabled
+                    await _dataRepository.SaveAsync(currentData);
+                }
+            }
+            catch (Exception ex)
+            {
+                _notificationService.ShowWarning($"Failed to immediately encrypt existing data: {ex.Message}. Data will be encrypted on next save.", "Encryption Warning");
+            }
+        }
+
+        private async Task DecryptExistingDataAsync()
+        {
+            try
+            {
+                // Get the current data
+                var currentData = await _dataRepository.GetAsync();
+                if (currentData != null)
+                {
+                    // Save it again - this will now be unencrypted since encryption is disabled
+                    await _dataRepository.SaveAsync(currentData);
+                }
+            }
+            catch (Exception ex)
+            {
+                _notificationService.ShowWarning($"Failed to immediately decrypt existing data: {ex.Message}. Data will be decrypted on next save.", "Decryption Warning");
+            }
         }
     }
 }

@@ -4,6 +4,8 @@ using AccountManager.Core.Interfaces;
 using AccountManager.Infrastructure.Storage;
 using AccountManager.Infrastructure.Serialization;
 using AccountManager.Infrastructure.Configuration;
+using AccountManager.Infrastructure.Security;
+using AccountManager.Core.Services;
 using AccountManager.Repositories;
 using AccountManager.Managers;
 using AccountManager.UI;
@@ -24,6 +26,9 @@ namespace AccountManager.Core
         public IPathProvider PathProvider { get; private set; }
         public IDialogManager DialogManager { get; private set; }
         public INotificationService NotificationService { get; private set; }
+        public IEncryptionService EncryptionService { get; private set; }
+        public IEncryptionConfigManager EncryptionConfigManager { get; private set; }
+        public StartupEncryptionService StartupEncryptionService { get; private set; }
         
         // Repositories
         public AppDataRepository DataRepository { get; private set; }
@@ -49,20 +54,38 @@ namespace AccountManager.Core
                 FileStorage = new FileStorage();
                 NotificationService = UI.NotificationService.Instance;
                 DialogManager = UI.DialogManager.Instance;
+                EncryptionService = new EncryptionService();
                 
                 // Initialize infrastructure with dependencies
                 PathProvider = new PathProvider(FileStorage);
-                Serializer = new JsonSerializer(FileStorage);
+                var baseSerializer = new JsonSerializer(FileStorage);
                 
-                // Initialize repositories
+                // Initialize with base serializer first
+                Serializer = baseSerializer;
+                DataRepository = new AppDataRepository(Serializer, PathProvider);
+                ConfigurationManager = new ConfigurationManager(DataRepository, null);
+                
+                // Create AppConfig-based encryption manager that detects from file content
+                EncryptionConfigManager = new AppConfigEncryptionManager(PathProvider);
+                
+                // Create encrypted serializer wrapper
+                var encryptedSerializer = new EncryptedJsonSerializer(baseSerializer, EncryptionService, EncryptionConfigManager);
+                
+                // Replace serializer in repository with encrypted version
+                Serializer = encryptedSerializer;
                 DataRepository = new AppDataRepository(Serializer, PathProvider);
                 
-                // Initialize managers
+                // Re-initialize configuration manager with new repository
+                ConfigurationManager = new ConfigurationManager(DataRepository, null);
+                
+                // Initialize remaining managers
                 ApplicationStateManager.Initialize(DataRepository);
                 StateManager = ApplicationStateManager.Instance;
                 ThemeManager = new ThemeManager(DataRepository);
                 ImportExportManager = new ImportExportManager(DataRepository, DialogManager, NotificationService);
-                ConfigurationManager = new ConfigurationManager(DataRepository);
+                
+                // Initialize startup encryption service
+                StartupEncryptionService = new StartupEncryptionService(EncryptionConfigManager, EncryptionService, DialogManager, NotificationService);
 
             }
             catch (Exception ex)
@@ -118,6 +141,14 @@ namespace AccountManager.Core
         }
 
         /// <summary>
+        /// Gets the encrypted serializer for passphrase management
+        /// </summary>
+        public EncryptedJsonSerializer GetEncryptedSerializer()
+        {
+            return Serializer as EncryptedJsonSerializer;
+        }
+
+        /// <summary>
         /// Gets a service instance by type
         /// </summary>
         public T GetService<T>() where T : class
@@ -129,6 +160,8 @@ namespace AccountManager.Core
             if (type == typeof(IPathProvider)) return PathProvider as T;
             if (type == typeof(IDialogManager)) return DialogManager as T;
             if (type == typeof(INotificationService)) return NotificationService as T;
+            if (type == typeof(IEncryptionService)) return EncryptionService as T;
+            if (type == typeof(IEncryptionConfigManager)) return EncryptionConfigManager as T;
             if (type == typeof(AppDataRepository)) return DataRepository as T;
             if (type == typeof(ApplicationStateManager)) return StateManager as T;
             if (type == typeof(ThemeManager)) return ThemeManager as T;

@@ -35,7 +35,7 @@ namespace AccountManager.ViewModels
         public ObservableCollection<AccountGroup> Groups { get; set; } = new();
         public SidebarViewModel SidebarViewModel { get; private set; }
         public ThemeManager ThemeService => _themeManager;
-        public bool EnableLocalSearch => _configurationManager?.EnableLocalSearch ?? true;
+        public bool EnableLocalSearch => _configurationManager?.EnableLocalSearch ?? false;
         public bool CensorAccountData => _configurationManager?.CensorAccountData ?? false;
         public bool CensorPassword => _configurationManager?.CensorPassword ?? true;
 
@@ -265,7 +265,7 @@ namespace AccountManager.ViewModels
             SidebarViewModel = new SidebarViewModel();
 
             InitializeCommands();
-            LoadDataAsync(); // Load data FIRST before subscribing to events
+            // Note: LoadDataAsync() will be called manually after encryption is initialized
             SubscribeToSidebarEvents();
             SubscribeToSettingsEvents();
             SubscribeToDataChanges(); // Subscribe to data change events for import/export
@@ -302,7 +302,14 @@ namespace AccountManager.ViewModels
             _configurationManager.ArchiveSettingChanged += OnArchiveSettingChanged;
             _configurationManager.PropertyChanged += (sender, e) =>
             {
-                if (e.PropertyName == nameof(_configurationManager.EnableLocalSearch))
+                if (string.IsNullOrEmpty(e.PropertyName))
+                {
+                    // All properties changed - refresh all configuration-dependent properties
+                    OnPropertyChanged(nameof(EnableLocalSearch));
+                    OnPropertyChanged(nameof(CensorAccountData));
+                    OnPropertyChanged(nameof(CensorPassword));
+                }
+                else if (e.PropertyName == nameof(_configurationManager.EnableLocalSearch))
                 {
                     OnPropertyChanged(nameof(EnableLocalSearch));
                 }
@@ -404,7 +411,7 @@ namespace AccountManager.ViewModels
             );
         }
 
-        private async void LoadDataAsync()
+        public async void LoadDataAsync()
         {
             try
             {

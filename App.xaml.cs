@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Reflection;
 using AccountManager.Core;
+using AccountManager.UI;
 
 namespace AccountManager
 {
@@ -20,15 +21,64 @@ namespace AccountManager
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine("App startup: SetupGlobalInfo");
                 SetupGlobalInfo();
+                
+                System.Diagnostics.Debug.WriteLine("App startup: SetupGlobalServicesAsync");
                 await SetupGlobalServicesAsync();
                 
-                // Create and show MainWindow only after theme is fully loaded
-                CreateAndShowMainWindow();
+                System.Diagnostics.Debug.WriteLine("App startup: CreateMainWindow");
+                // Create MainWindow first (but don't show yet) so DialogManager can initialize
+                CreateMainWindow();
+                
+                System.Diagnostics.Debug.WriteLine("App startup: InitializeThemeAsync");
+                // Initialize theme manager first
+                await InitializeThemeAsync();
+                
+                System.Diagnostics.Debug.WriteLine("App startup: ShowMainWindow");
+                // Show MainWindow first so the visual tree is ready for dialogs
+                ShowMainWindow();
+                
+                // Give the UI a moment to render before showing dialogs
+                await Task.Delay(100);
+                
+                System.Diagnostics.Debug.WriteLine("App startup: InitializeEncryptionAsync");
+                // Initialize encryption and prompt for passphrase if needed
+                var encryptionReady = await InitializeEncryptionAsync();
+                if (!encryptionReady)
+                {
+                    System.Diagnostics.Debug.WriteLine("App startup: Encryption cancelled, shutting down");
+                    // User cancelled passphrase entry or encryption failed
+                    Shutdown();
+                    return;
+                }
+                
+                System.Diagnostics.Debug.WriteLine("App startup: Reload data after encryption");
+                // Clear cached data and reload everything now that encryption is available
+                var serviceContainer = ServiceContainer.Instance;
+                var dataRepository = serviceContainer.DataRepository;
+                var themeManager = serviceContainer.ThemeManager;
+                var configurationManager = serviceContainer.ConfigurationManager;
+                
+                // Clear the cached data so it gets reloaded with the correct passphrase
+                dataRepository.InvalidateCache();
+                
+                await themeManager.ReloadThemeAfterEncryptionAsync();
+                await configurationManager.ReloadSettingsAfterEncryptionAsync();
+                
+                System.Diagnostics.Debug.WriteLine("App startup: InitializeDataAsync");
+                // Now trigger data loading after encryption is fully ready
+                await InitializeDataAsync();
+                
+                System.Diagnostics.Debug.WriteLine("App startup: Complete");
             }
             catch (Exception ex)
             {
-                throw new Exception("Failed to load initial configuration", ex);
+                System.Diagnostics.Debug.WriteLine($"App startup error: {ex}");
+                MessageBox.Show($"Critical startup error: {ex.Message}\n\nStack trace:\n{ex.StackTrace}", 
+                    "Startup Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Shutdown();
+                return;
             }
 
             base.OnStartup(e);
@@ -68,17 +118,75 @@ namespace AccountManager
             // Complete async initialization including path loading
             await serviceContainer.CompleteInitializationAsync();
             
-            // Initialize theme manager early and await theme loading before UI shows
-            var themeManager = serviceContainer.ThemeManager;
-            await themeManager.InitializeAsync();
+            // Note: ThemeManager initialization moved to after encryption is ready
         }
 
-        private void CreateAndShowMainWindow()
+        private async Task<bool> InitializeEncryptionAsync()
         {
-            // Create MainWindow only after theme is fully initialized
+            try
+            {
+                var serviceContainer = ServiceContainer.Instance;
+                var startupEncryptionService = serviceContainer.StartupEncryptionService;
+                
+                return await startupEncryptionService.InitializeEncryptionAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error initializing encryption: {ex.Message}", "Encryption Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+        }
+
+        private async Task InitializeThemeAsync()
+        {
+            try
+            {
+                var serviceContainer = ServiceContainer.Instance;
+                var themeManager = serviceContainer.ThemeManager;
+                await themeManager.InitializeAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error initializing theme: {ex.Message}", "Theme Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task InitializeDataAsync()
+        {
+            try
+            {
+                // Initialize configuration manager settings after encryption is ready
+                var serviceContainer = ServiceContainer.Instance;
+                var configurationManager = serviceContainer.ConfigurationManager;
+                configurationManager.LoadSettings();
+                
+                // Get the MainViewModel and trigger data loading
+                if (MainWindow?.DataContext is ViewModels.MainViewModel mainViewModel)
+                {
+                    mainViewModel.LoadDataAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading application data: {ex.Message}", "Data Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void CreateMainWindow()
+        {
+            // Create MainWindow (but don't show yet)
             var mainWindow = new Views.Window.MainWindow();
             MainWindow = mainWindow;
-            mainWindow.Show();
+            
+            // Initialize DialogManager now that MainWindow exists
+            var dialogManager = ServiceContainer.Instance.DialogManager as DialogManager;
+            dialogManager?.Initialize(mainWindow);
+        }
+
+        private void ShowMainWindow()
+        {
+            // Show the MainWindow after everything is ready
+            MainWindow?.Show();
         }
 
     }

@@ -8,7 +8,7 @@ namespace AccountManager.Config
         public static class Application
         {
             public const string Name = "PassVault";
-            public const string Version = "2.1.0";
+            public const string Version = "2.2.0";
             public const string Company = "Avanty.Works";
             public const string Description = "Secure password and account management application";
             public const string Copyright = "Copyright © 2025";
@@ -46,6 +46,12 @@ namespace AccountManager.Config
             public const int TrashRetentionDays = 30;
             public const bool AutoEmptyTrash = false;
             public const bool ShowFavoritesGroup = true;
+        }
+
+        // Encryption Settings
+        public static class Encryption
+        {
+            public const string Salt = "PassVault2024_SecureSalt_v1.0.0"; // Fixed salt for the application
         }
 
         // Theme Settings
