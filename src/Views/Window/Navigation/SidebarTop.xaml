@@ -44,7 +44,9 @@
                                      BlurRadius="8"/>
                 </Border.Effect>
                 <Image Style="{StaticResource LogoImageStyle}"
-                       Width="24" Height="24"/>
+                       Width="24" Height="24"
+                       RenderOptions.BitmapScalingMode="HighQuality"
+                       RenderOptions.EdgeMode="Aliased"/>
             </Border>
 
             <!-- Modern App Title & Version -->

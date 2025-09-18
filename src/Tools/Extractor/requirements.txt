@@ -1,0 +1,4 @@
+# PassVault Account Extractor Requirements
+# Install with: pip install -r requirements.txt
+
+ttkbootstrap>=1.10.0

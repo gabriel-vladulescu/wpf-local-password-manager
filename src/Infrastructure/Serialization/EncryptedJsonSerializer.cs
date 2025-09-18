@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using AccountManager.Core.Interfaces;
 using AccountManager.Core.Exceptions;
+using AccountManager.Config;
 
 namespace AccountManager.Infrastructure.Serialization
 {
@@ -83,10 +84,10 @@ namespace AccountManager.Infrastructure.Serialization
                 var encryptedData = await _encryptionService.EncryptAsync(json, GetCurrentPassphrase());
                 
                 // Wrap in container and save
-                var container = new EncryptedContainer 
-                { 
+                var container = new EncryptedContainer
+                {
                     Data = encryptedData,
-                    Version = "1.0"
+                    Version = AppConfig.Application.Version
                 };
                 
                 return await _baseSerializer.SerializeAsync(container, filePath);
